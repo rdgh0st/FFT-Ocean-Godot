@@ -1,0 +1,32 @@
+[gd_scene load_steps=7 format=3 uid="uid://c3rfowtdgjmvv"]
+
+[ext_resource type="Shader" uid="uid://i6fhgq2hb1ht" path="res://Shaders/water.tres" id="1_3wkm4"]
+[ext_resource type="PackedScene" uid="uid://tvicilu2u158" path="res://Pirate/formationLarge_stone.gltf" id="2_6725w"]
+[ext_resource type="PackedScene" uid="uid://d4nx4cwpdux0s" path="res://Scenes/boat_small.tscn" id="3_fe8ot"]
+[ext_resource type="PackedScene" uid="uid://ceaeiuwyxqvvx" path="res://Pirate/ship_dark.gltf" id="4_hvhcp"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3507b"]
+render_priority = 0
+shader = ExtResource("1_3wkm4")
+shader_parameter/ColorParameter = Color(1, 1, 1, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_yvuum"]
+material = SubResource("ShaderMaterial_3507b")
+size = Vector2(50, 50)
+subdivide_width = 200
+subdivide_depth = 200
+
+[node name="TestEnv" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00999737, 0.0067482, -0.0131764)
+
+[node name="Water" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_yvuum")
+
+[node name="formationLarge_stone" parent="." instance=ExtResource("2_6725w")]
+transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, -7.56545, -0.157155, 28.3632)
+
+[node name="boat_small" parent="." instance=ExtResource("3_fe8ot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.21008, 0.139021, 3.13439)
+
+[node name="ship_dark" parent="." instance=ExtResource("4_hvhcp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.3158, -0.553416, 0.001297)

@@ -1,0 +1,20 @@
+[gd_scene load_steps=6 format=3 uid="uid://d4nx4cwpdux0s"]
+
+[ext_resource type="PackedScene" uid="uid://chnaq0u0e1r4k" path="res://Pirate/boat_small.gltf" id="1_ce437"]
+[ext_resource type="Script" path="res://Shaders/boat_small.gd" id="2_gvfv7"]
+[ext_resource type="Material" uid="uid://bwshgwmy5w8ur" path="res://Shaders/mask.tres" id="2_xen35"]
+[ext_resource type="ArrayMesh" uid="uid://bjyekypebyuqi" path="res://Shaders/boat_mesh.tres" id="3_1rkc8"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_1u677"]
+points = PackedVector3Array(0.446163, 0.199976, 0.72985, 0.424933, 0.349966, 0.72985, -0.44625, 0.199976, 0.72985, 0.339929, -4.51195e-17, 0.644952, 0.446163, 0.199976, -0.251917, -0.425021, 0.349966, 0.72985, 0.424933, 0.349966, -0.201559, -0.340017, -4.51195e-17, 0.644952, -0.44625, 0.199976, -0.251917, 0.339929, -4.51195e-17, -0.000126481, 0.244092, 0.199976, -0.613713, -0.425021, 0.349966, -0.201559, 0.232473, 0.349966, -0.546085, -0.340017, -4.51195e-17, -0.000126481, -0.244179, 0.199976, -0.613713, 0.185996, -4.51195e-17, -0.275718, -8.73506e-05, 0.199976, -0.752742, -8.73506e-05, 0.349966, -0.678583, -8.73506e-05, -4.51195e-17, -0.381804, -0.23256, 0.349966, -0.546085, -0.186083, -4.51195e-17, -0.275718)
+
+[node name="boat_small" instance=ExtResource("1_ce437")]
+script = ExtResource("2_gvfv7")
+
+[node name="boat_small_8angles" parent="." index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+material_overlay = ExtResource("2_xen35")
+mesh = ExtResource("3_1rkc8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." index="1"]
+shape = SubResource("ConvexPolygonShape3D_1u677")
