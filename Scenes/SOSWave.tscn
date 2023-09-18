@@ -1,9 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://scdiuc0m7wgd"]
+[gd_scene load_steps=7 format=3 uid="uid://scdiuc0m7wgd"]
 
 [ext_resource type="Shader" path="res://Shaders/BasicFunctions.gdshader" id="1_hdx84"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_xdex7"]
-size = Vector2(50, 50)
+size = Vector2(100, 100)
 subdivide_width = 200
 subdivide_depth = 200
 
@@ -12,12 +12,33 @@ render_priority = 0
 shader = ExtResource("1_hdx84")
 shader_parameter/color1 = Color(0, 0, 1, 1)
 shader_parameter/color2 = Color(1, 0, 0, 1)
-shader_parameter/numWaves = 4.0
+shader_parameter/numWaves = 10.0
 shader_parameter/wavelength = 5.0
-shader_parameter/amplitude = 1.0
-shader_parameter/speed = 5.0
-shader_parameter/direction = Vector2(2, 2.08165e-12)
+shader_parameter/amplitude = 3.0
+shader_parameter/speed = 2.0
+shader_parameter/direction = Vector2(1, 2.08165e-12)
+shader_parameter/lightDirection = Vector3(2.08165e-12, -1, 2.08165e-12)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1hygd"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_8rke8"]
+sky_material = SubResource("ProceduralSkyMaterial_1hygd")
+
+[sub_resource type="Environment" id="Environment_btjiv"]
+background_mode = 2
+sky = SubResource("Sky_8rke8")
+tonemap_mode = 2
+glow_enabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D"]
 mesh = SubResource("PlaneMesh_xdex7")
 surface_material_override/0 = SubResource("ShaderMaterial_jf3rr")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_btjiv")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 0, 0)
+shadow_enabled = true
