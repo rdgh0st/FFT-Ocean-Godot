@@ -1,44 +1,54 @@
-[gd_scene load_steps=7 format=3 uid="uid://scdiuc0m7wgd"]
+[gd_scene load_steps=8 format=3 uid="uid://cpvn8axkdo2ou"]
 
 [ext_resource type="Shader" path="res://Shaders/BasicFunctions.gdshader" id="1_hdx84"]
+[ext_resource type="Texture2D" uid="uid://cv1cw7nctv2ss" path="res://addons/AllSkyFree/Skyboxes/AllSkyFree_Sky_ColdSunset_Equirect.png" id="2_we2u2"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_xdex7"]
-size = Vector2(100, 100)
+size = Vector2(500, 500)
 subdivide_width = 200
 subdivide_depth = 200
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jf3rr"]
 render_priority = 0
 shader = ExtResource("1_hdx84")
-shader_parameter/color1 = Color(0, 0, 1, 1)
-shader_parameter/color2 = Color(1, 0, 0, 1)
-shader_parameter/numWaves = 10.0
-shader_parameter/wavelength = 5.0
-shader_parameter/amplitude = 3.0
-shader_parameter/speed = 2.0
-shader_parameter/direction = Vector2(1, 2.08165e-12)
-shader_parameter/lightDirection = Vector3(2.08165e-12, -1, 2.08165e-12)
+shader_parameter/ambientLightColor = Color(0, 0.54902, 0.843137, 1)
+shader_parameter/ambientReflectance = 0.1
+shader_parameter/diffuseColor = Color(0, 0.364706, 0.572549, 1)
+shader_parameter/lightColor = Color(1, 1, 1, 1)
+shader_parameter/specColor = Color(1, 1, 0.772549, 1)
+shader_parameter/specLightColor = Color(1, 0.921569, 0.937255, 1)
+shader_parameter/lightPos = Vector3(0, 10, 50)
+shader_parameter/shininess = 100.0
+shader_parameter/numWaves = 50.0
+shader_parameter/ampMultiplier = 0.75
+shader_parameter/freqMultiplier = 1.08
+shader_parameter/speed = 4.0
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1hygd"]
-sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
-ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_n4635"]
+panorama = ExtResource("2_we2u2")
 
-[sub_resource type="Sky" id="Sky_8rke8"]
-sky_material = SubResource("ProceduralSkyMaterial_1hygd")
+[sub_resource type="Sky" id="Sky_l3r32"]
+sky_material = SubResource("PanoramaSkyMaterial_n4635")
 
-[sub_resource type="Environment" id="Environment_btjiv"]
+[sub_resource type="Environment" id="Environment_s5ttj"]
 background_mode = 2
-sky = SubResource("Sky_8rke8")
+sky = SubResource("Sky_l3r32")
+sky_rotation = Vector3(0, 3.14159, 0)
+ambient_light_source = 3
+reflected_light_source = 2
 tonemap_mode = 2
 glow_enabled = true
+fog_enabled = true
+fog_density = 0.005
+fog_sky_affect = 0.0
 
 [node name="MeshInstance3D" type="MeshInstance3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.26022)
 mesh = SubResource("PlaneMesh_xdex7")
 surface_material_override/0 = SubResource("ShaderMaterial_jf3rr")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_btjiv")
+environment = SubResource("Environment_s5ttj")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866025, -0.433013, 0.25, 0, 0.5, 0.866025, -0.5, 0.75, -0.433013, 0, 0, 0)
-shadow_enabled = true
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, 0)
