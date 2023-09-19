@@ -15,6 +15,9 @@ uniform float ampMultiplier;
 uniform float freqMultiplier;
 uniform float speed;
 
+uniform float reflectanceStrength;
+uniform sampler2D panorama;
+
 struct sosOutput {
 	float height;
 	vec3 tangent;
@@ -27,6 +30,14 @@ float random (vec2 uv) {
         vec2(12.9898,78.233))) * 43758.5453123);
 }
 
+vec2 uv_sphere(vec3 v)
+{
+	vec2 uv=vec2(0.5 + atan(v.z, v.x) / (2.0 * PI), acos(v.y) / PI);
+	uv.y=1.-uv.y;
+	uv.x=-0.75+uv.x;
+	uv=fract(uv);
+	return uv;
+}
 
 sosOutput singleSine(vec3 v, float a, float freq, float lamda, vec2 direction, float previousDerivative) {
 	sosOutput output;
@@ -98,7 +109,14 @@ void fragment() {
 		facing = 1.0;
 	}
 	vec3 specular = specColor * specLightColor * facing * pow(max(dot(N, H), 0.0), shininess);
-	ALBEDO = ambient + diffuse + specular;
+	
+	vec3 I = VERTEX - VIEW;
+	vec3 R = reflect(I, N);
+	
+	vec2 uv = uv_sphere(normalize(R));
+	vec4 reflectance = texture(panorama, uv);
+	
+	ALBEDO = ambient + diffuse + specular + (reflectance.rgb * reflectanceStrength);
 }
 
 /*

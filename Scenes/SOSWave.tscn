@@ -11,18 +11,20 @@ subdivide_depth = 200
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jf3rr"]
 render_priority = 0
 shader = ExtResource("1_hdx84")
-shader_parameter/ambientLightColor = Color(0, 0.54902, 0.843137, 1)
-shader_parameter/ambientReflectance = 0.1
-shader_parameter/diffuseColor = Color(0, 0.364706, 0.572549, 1)
-shader_parameter/lightColor = Color(1, 1, 1, 1)
+shader_parameter/ambientLightColor = Color(0, 0.427451, 0.67451, 1)
+shader_parameter/ambientReflectance = 1.0
+shader_parameter/diffuseColor = Color(0.196078, 0.839216, 1, 1)
+shader_parameter/lightColor = Color(1, 1, 0.8, 1)
 shader_parameter/specColor = Color(1, 1, 0.772549, 1)
 shader_parameter/specLightColor = Color(1, 0.921569, 0.937255, 1)
-shader_parameter/lightPos = Vector3(0, 10, 50)
+shader_parameter/lightPos = Vector3(0, 20, 0)
 shader_parameter/shininess = 100.0
 shader_parameter/numWaves = 50.0
-shader_parameter/ampMultiplier = 0.75
-shader_parameter/freqMultiplier = 1.08
-shader_parameter/speed = 4.0
+shader_parameter/ampMultiplier = 0.7
+shader_parameter/freqMultiplier = 1.1
+shader_parameter/speed = 2.0
+shader_parameter/reflectanceStrength = 0.6
+shader_parameter/panorama = ExtResource("2_we2u2")
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_n4635"]
 panorama = ExtResource("2_we2u2")
@@ -33,7 +35,6 @@ sky_material = SubResource("PanoramaSkyMaterial_n4635")
 [sub_resource type="Environment" id="Environment_s5ttj"]
 background_mode = 2
 sky = SubResource("Sky_l3r32")
-sky_rotation = Vector3(0, 3.14159, 0)
 ambient_light_source = 3
 reflected_light_source = 2
 tonemap_mode = 2
