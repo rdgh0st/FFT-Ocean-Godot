@@ -15,7 +15,9 @@ uniform float ampMultiplier;
 uniform float freqMultiplier;
 uniform float speed;
 
-uniform float reflectanceStrength;
+uniform float fresnelBias;
+uniform float fresnelScale;
+uniform float fresnelPower;
 uniform sampler2D panorama;
 
 struct sosOutput {
@@ -108,15 +110,18 @@ void fragment() {
 	if (dot(N, L) > 0.0) {
 		facing = 1.0;
 	}
-	vec3 specular = specColor * specLightColor * facing * pow(max(dot(N, H), 0.0), shininess);
+	vec3 I = normalize(VERTEX - VIEW);
 	
-	vec3 I = VERTEX - VIEW;
+	float fresnel = fresnelBias + fresnelScale * pow(1.0 + dot(I, N), fresnelPower);
+	
+	vec3 specular = specColor * specLightColor * facing * pow(max(dot(N, H), 0.0), shininess) * fresnel;
+	
 	vec3 R = reflect(I, N);
 	
 	vec2 uv = uv_sphere(normalize(R));
 	vec4 reflectance = texture(panorama, uv);
 	
-	ALBEDO = ambient + diffuse + specular + (reflectance.rgb * reflectanceStrength);
+	ALBEDO = ambient + diffuse + specular + (reflectance.rgb * fresnel);
 }
 
 /*
