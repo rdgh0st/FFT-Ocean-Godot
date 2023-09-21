@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="3D Test"
-run/main_scene="res://main.tscn"
+run/main_scene="res://Scenes/SOSWave.tscn"
 config/features=PackedStringArray("4.1", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -49,3 +49,7 @@ move_backward={
 , Object(InputEventJoypadMotion,"resource_local_to_scene":false,"resource_name":"","device":-1,"axis":1,"axis_value":1.0,"script":null)
 ]
 }
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
