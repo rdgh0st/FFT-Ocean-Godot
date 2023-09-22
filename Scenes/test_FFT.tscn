@@ -1,0 +1,38 @@
+[gd_scene load_steps=8 format=3 uid="uid://kaefq8k8h6wl"]
+
+[ext_resource type="Shader" path="res://Shaders/FFTWater.gdshader" id="1_6gfy4"]
+[ext_resource type="Script" path="res://Water.gd" id="2_umjgg"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
+size = Vector2(128, 128)
+subdivide_width = 128
+subdivide_depth = 128
+
+[sub_resource type="Gradient" id="Gradient_eapve"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_jpiv8"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_npyqd"]
+width = 128
+height = 128
+color_ramp = SubResource("Gradient_eapve")
+noise = SubResource("FastNoiseLite_jpiv8")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5e6qt"]
+render_priority = 0
+shader = ExtResource("1_6gfy4")
+shader_parameter/height_scale = 100.0
+shader_parameter/outputImage = SubResource("NoiseTexture2D_npyqd")
+
+[node name="MeshInstance3D" type="MeshInstance3D"]
+mesh = SubResource("PlaneMesh_c8ucf")
+surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
+script = ExtResource("2_umjgg")
+compute_shader = "res://Shaders/compute_shader.glsl"
+
+[node name="TextureRect" type="TextureRect" parent="."]
+offset_right = 274.0
+offset_bottom = 235.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-0.0505929, 0.470409, -0.880997, 0, 0.882127, 0.471012, 0.998719, 0.0238299, -0.0446294, -88.6139, 54.9134, 11.6902)

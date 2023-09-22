@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://crw6atftapytp"
+path="res://.godot/imported/compute_shader.glsl-c71f26fa5d42b598fddd8733ccc4f16e.res"
+
+[deps]
+
+source_file="res://addons/AllSkyFree/Skyboxes/compute_shader.glsl"
+dest_files=["res://.godot/imported/compute_shader.glsl-c71f26fa5d42b598fddd8733ccc4f16e.res"]
+
+[params]
+
