@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://kaefq8k8h6wl"]
 
 [ext_resource type="Shader" path="res://Shaders/FFTWater.gdshader" id="1_6gfy4"]
-[ext_resource type="Script" path="res://Water.gd" id="2_umjgg"]
+[ext_resource type="Script" path="res://FFTWater_Test.gd" id="2_l2wr8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
 size = Vector2(128, 128)
@@ -27,12 +27,23 @@ shader_parameter/outputImage = SubResource("NoiseTexture2D_npyqd")
 [node name="MeshInstance3D" type="MeshInstance3D"]
 mesh = SubResource("PlaneMesh_c8ucf")
 surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
-script = ExtResource("2_umjgg")
-compute_shader = "res://Shaders/compute_shader.glsl"
+script = ExtResource("2_l2wr8")
+compute_shader = "res://Shaders/JONSWAP_test.glsl"
+fetch = 250000.0
+windSpeed = 5.0
+enhancementFactor = 3.3
+inputfreq = 1.5
+resolution = 256.0
+oceanSize = 256.0
+lowCutoff = 0.1
+highCutoff = 100.0
+depth = 1.0
 
 [node name="TextureRect" type="TextureRect" parent="."]
-offset_right = 274.0
-offset_bottom = 235.0
+offset_right = 1147.0
+offset_bottom = 640.0
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-0.0505929, 0.470409, -0.880997, 0, 0.882127, 0.471012, 0.998719, 0.0238299, -0.0446294, -88.6139, 54.9134, 11.6902)

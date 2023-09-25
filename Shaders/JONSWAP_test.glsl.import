@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://bfnr2dk7tcxsk"
+path="res://.godot/imported/JONSWAP_test.glsl-289dc6dcfa3e40092b3823cde7be0f74.res"
+
+[deps]
+
+source_file="res://Shaders/JONSWAP_test.glsl"
+dest_files=["res://.godot/imported/JONSWAP_test.glsl-289dc6dcfa3e40092b3823cde7be0f74.res"]
+
+[params]
+
