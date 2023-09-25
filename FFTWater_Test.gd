@@ -16,8 +16,11 @@ var shader_rid: RID;
 var uniform_set: RID;
 var pipeline: RID;
 
+var initTime: float;
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	initTime = Time.get_unix_time_from_system();
 	init_gpu();
 
 func init_gpu():
@@ -27,7 +30,7 @@ func init_gpu():
 	var shader_spirv: RDShaderSPIRV = shader_file_data.get_spirv();
 	shader_rid = rd.shader_create_from_spirv(shader_spirv);
 	
-	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, 0, transformHorizontal, lowCutoff, highCutoff, depth];
+	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];
 	
 	var params := PackedFloat32Array(input).to_byte_array();
 	var buffer = rd.storage_buffer_create(params.size(), params);
