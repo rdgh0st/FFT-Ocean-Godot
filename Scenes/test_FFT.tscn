@@ -30,14 +30,14 @@ surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
 script = ExtResource("2_l2wr8")
 compute_shader = "res://Shaders/JONSWAP_test.glsl"
 fetch = 250000.0
-windSpeed = 5.0
+windSpeed = 10.0
 enhancementFactor = 3.3
 inputfreq = 1.5
-resolution = 256.0
-oceanSize = 256.0
+resolution = 512.0
+oceanSize = 512.0
 lowCutoff = 0.1
 highCutoff = 100.0
-depth = 1.0
+depth = 1.5
 
 [node name="TextureRect" type="TextureRect" parent="."]
 offset_right = 1147.0

@@ -65,13 +65,6 @@ float JONSWAP(float freq) {
 
 void main() {
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
-    /*
-    float n = (pixel_coord.x < 0.5f * params.resolution) ? pixel_coord.x : pixel_coord.x - params.resolution;
-    float m = (pixel_coord.y < 0.5f * params.resolution) ? pixel_coord.y : pixel_coord.y - params.resolution;
-
-    vec2 wave_vector = (2.f * PI * vec2(n, m)) / params.oceanSize;
-    float k = length(wave_vector);
-    */
     float halfN = params.resolution / 2.0f;
     float deltaK = 2.0f * PI / params.oceanSize;
     vec2 k = (pixel_coord.xy - halfN) * deltaK;
@@ -87,7 +80,4 @@ void main() {
     } else {
         imageStore(spectrum_image, pixel_coord, vec4(0.0));
     }
-
-    //params.outputValue = JONSWAP(params.inputFreq);
-    //params.outputValue = 22.0f * pow(((g * g) / (params.windSpeed * params.fetch)), (0.33f));
 }
