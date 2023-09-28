@@ -1,5 +1,6 @@
 extends MeshInstance3D
 @export_file("*.glsl") var compute_shader
+@export_file("*.glsl") var displacement_shader;
 @export var fetch : float;
 @export var windSpeed : float;
 @export var enhancementFactor: float;
