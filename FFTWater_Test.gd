@@ -64,6 +64,21 @@ func init_gpu():
 	rd.submit();
 	rd.sync();
 	
+	var DisplacementImage = Image.create(resolution, resolution, false, Image.FORMAT_RGF);
+	
+	var displacementFormat = RDTextureFormat.new();
+	displacementFormat.width = resolution;
+	displacementFormat.height = resolution;
+	displacementFormat.format = RenderingDevice.DATA_FORMAT_R32G32_SFLOAT;
+	displacementFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	
+	var displacement_rid = rd.texture_create(displacementFormat, RDTextureView.new(), DisplacementImage.get_data());
+	var displacementUniform = RDUniform.new();
+	displacementUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
+	displacementUniform.binding = 11;
+	displacementUniform.add_id(displacement_rid);
+	
+	
 	var output_bytes := rd.buffer_get_data(buffer);
 	var output := output_bytes.to_float32_array();
 	print("Input: ", input)
