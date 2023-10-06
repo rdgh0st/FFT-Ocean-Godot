@@ -29,18 +29,27 @@ mesh = SubResource("PlaneMesh_c8ucf")
 surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
 script = ExtResource("2_l2wr8")
 compute_shader = "res://Shaders/JONSWAP_test.glsl"
+displacement_shader = "res://Shaders/SpectrumUpdate.glsl"
+brute_force = "res://Shaders/BruteForce_Add.glsl"
 fetch = 250000.0
 windSpeed = 10.0
 enhancementFactor = 3.3
 inputfreq = 1.5
-resolution = 512.0
+resolution = 128.0
 oceanSize = 512.0
 lowCutoff = 0.1
 highCutoff = 100.0
 depth = 1.5
 
 [node name="TextureRect" type="TextureRect" parent="."]
-offset_right = 1147.0
+offset_right = 554.0
+offset_bottom = 640.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TextureRect2" type="TextureRect" parent="."]
+offset_left = 599.0
+offset_right = 1153.0
 offset_bottom = 640.0
 expand_mode = 1
 stretch_mode = 5

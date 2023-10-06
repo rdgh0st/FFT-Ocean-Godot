@@ -31,7 +31,7 @@ vec2 MultiplyComplex(vec2 a, vec2 b) {
 void main() {
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
     vec2 h0 = vec2(imageLoad(spectrum_image, pixel_coord).r, 0.0);
-    vec2 h0star = vec2(imageLoad(spectrum_image, (int(params.resolution) - pixel_coord) % int (params.resolution)).r, 0.0);
+    vec2 h0star = vec2(imageLoad(spectrum_image, (int(params.resolution) - pixel_coord) % (int (params.resolution) - 1)).r, 0.0);
     h0star.y *= -1.0;
 
     float halfN = params.resolution / 2.0f;
@@ -40,7 +40,7 @@ void main() {
     float kLength = length(k);
     float kLengthRcp = 1.0;
 
-    if (kLength > 0.0001) {
+    if (kLength > 0.0000001) {
         kLengthRcp = 1.0 / kLength;
     }
 
@@ -52,12 +52,29 @@ void main() {
     vec2 ihTilda = vec2(-hTilda.y, hTilda.x);
 
     vec2 hX = ihTilda * k.x * kLengthRcp;
+    vec2 hY = hTilda;
     vec2 hZ = ihTilda * k.y * kLengthRcp;
 
+    vec2 hX_dx = -hTilda * k.x * k.x * kLengthRcp;
+    vec2 hY_dx = ihTilda * k.x;
+    vec2 hZ_dx = -hTilda * k.x * k.y * kLengthRcp;
+
+    vec2 hY_dz = ihTilda * k.y;
+    vec2 hZ_dz = -hTilda * k.y * k.y * kLengthRcp; 
+
+    vec2 hTildaDispX = vec2(hX.x - hZ.y, hX.y + hZ.x);
+    vec2 hTildaDispZ = vec2(hY.x - hZ_dx.y, hY.y + hZ_dx.x);
+
+    vec2 hTildaSlopeX = vec2(hY_dx.x - hY_dz.y, hY_dx.y + hY_dz.x);
+    vec2 hTildaSlopeZ = vec2(hX_dx.x - hZ_dz.y, hX_dx.y + hZ_dz.x);
+
+/*
     if (k.x == 0.0 && k.y == 0.0) {
         hTilda = vec2(0.0);
         hX = vec2(0.0);
     }
+    */
 
-    imageStore(displacement_image, pixel_coord, vec4(hX + ihTilda, 0.0, 0.0));
+    imageStore(displacement_image, pixel_coord, vec4(hTildaDispX, hTildaDispZ));
+    imageStore(slope_image, pixel_coord, vec4(hTildaSlopeX, hTildaSlopeZ));
 }
