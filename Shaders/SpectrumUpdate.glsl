@@ -40,7 +40,7 @@ void main() {
     float kLength = length(k);
     float kLengthRcp = 1.0;
 
-    if (kLength > 0.0000001) {
+    if (kLength > 0.00001) {
         kLengthRcp = 1.0 / kLength;
     }
 

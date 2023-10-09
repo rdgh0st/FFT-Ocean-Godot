@@ -96,6 +96,12 @@ func init_gpu():
 	var image_new := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, image_output_bytes);
 	var tex := ImageTexture.create_from_image(image_new);
 	$TextureRect.texture = tex;
+	var sum = 0;
+	#for x in resolution:
+	#	for y in resolution:
+	#		sum += image_new.get_pixel(x, y).r;
+	#		print("adding ", image_new.get_pixel(x, y).r, "to get ", sum, " at ", x, y);
+	#print(sum);
 	generate_disp();
 
 func _notification(what):
@@ -174,8 +180,8 @@ func generate_brute_force():
 	uniform.binding = 0;
 	uniform.add_id(buffer);
 	
-	var test = [Vector2.ZERO, Vector2.ZERO];
-	var testParams := PackedVector2Array(test).to_byte_array();
+	var test = [0, 0, 0, 0];
+	var testParams := PackedFloat32Array(test).to_byte_array();
 	var testBuffer = rd.storage_buffer_create(test.size(), test);
 	var testUniform := RDUniform.new();
 	testUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER;
@@ -220,7 +226,12 @@ func generate_brute_force():
 	rd.compute_list_dispatch(compute_list, oceanSize / 8, oceanSize / 8, 1);
 	rd.compute_list_end();
 	rd.submit();
+	#await get_tree().create_timer(3).timeout
 	rd.sync();
+	
+	var testData = rd.buffer_get_data(testBuffer);
+	var testNums = testData.to_float32_array();
+	print(testNums);
 	
 	var normal_output_bytes = rd.texture_get_data(normal_rid, 0);
 	var normal_image := Image.create_from_data(oceanSize, oceanSize, false, Image.FORMAT_RGF, normal_output_bytes);
@@ -231,6 +242,9 @@ func generate_brute_force():
 	var slope_image := Image.create_from_data(oceanSize, oceanSize, false, Image.FORMAT_RGF, slope_output_bytes);
 	var tex2 := ImageTexture.create_from_image(slope_image);
 	$TextureRect2.texture = tex2;
+	
+	
+	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
 	
 	print(tex);
 
@@ -274,3 +288,4 @@ func cleanup_gpu():
 func _process(delta):
 	if (Input.is_action_just_pressed("move_backward")):
 		generate_disp();
+	generate_disp();

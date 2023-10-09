@@ -21,7 +21,22 @@ noise = SubResource("FastNoiseLite_jpiv8")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5e6qt"]
 render_priority = 0
 shader = ExtResource("1_6gfy4")
-shader_parameter/height_scale = 100.0
+shader_parameter/height_scale = 0.1
+shader_parameter/ambientLightColor = Color(0.129412, 0, 0.917647, 1)
+shader_parameter/ambientReflectance = 1.0
+shader_parameter/diffuseColor = Color(1, 1, 1, 1)
+shader_parameter/lightColor = Color(1, 1, 1, 1)
+shader_parameter/specColor = null
+shader_parameter/specLightColor = null
+shader_parameter/lightPos = null
+shader_parameter/shininess = null
+shader_parameter/numWaves = 1.0
+shader_parameter/ampMultiplier = null
+shader_parameter/freqMultiplier = null
+shader_parameter/speed = null
+shader_parameter/fresnelBias = null
+shader_parameter/fresnelScale = null
+shader_parameter/fresnelPower = null
 shader_parameter/outputImage = SubResource("NoiseTexture2D_npyqd")
 
 [node name="MeshInstance3D" type="MeshInstance3D"]
@@ -36,7 +51,7 @@ windSpeed = 10.0
 enhancementFactor = 3.3
 inputfreq = 1.5
 resolution = 128.0
-oceanSize = 512.0
+oceanSize = 128.0
 lowCutoff = 0.1
 highCutoff = 100.0
 depth = 1.5

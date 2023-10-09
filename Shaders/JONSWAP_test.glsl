@@ -36,19 +36,11 @@ const float ALPHA = 0.14;
 const float INV_ALPHA = 1.0 / ALPHA;
 const float K = 2.0 / (PI * ALPHA);
 
-float inv_error_function(float x)
-{
-	float y = log(1.0 - x*x);
-	float z = K + 0.5 * y;
-	return sqrt(sqrt(z*z - y * INV_ALPHA) - z) * sign(x);
-}
+vec2 UniformToGaussian(float u1, float u2) {
+    float R = sqrt(-2.0 * log(u1));
+    float theta = 2.0 * PI * u2;
 
-float gaussian_rand( vec2 n )
-{
-	float t = fract( params.time );
-	float x = nrand( n + 0.07*t );
-    
-	return inv_error_function(x*2.0-1.0)*0.15 + 0.5;
+    return vec2(R * cos(theta), R * sin(theta));
 }
 
 float JONSWAP(float freq) {
@@ -74,7 +66,11 @@ void main() {
         float coeff = 1.0f / sqrt(2);
         float dispersionK = sqrt(g * kLength * tanh(min(kLength * params.depth, 20)));
         float JSroot = sqrt(JONSWAP(dispersionK));
-        float res = coeff * gaussian_rand(k) * gaussian_rand(pixel_coord) * JSroot;
+        vec2 gauss = UniformToGaussian(nrand(normalize(k)), nrand(normalize(pixel_coord) + 0.0001));
+        float res = coeff * gauss.x * gauss.y * JSroot;
+        if (isinf(res) || isnan(res)) {
+            res = 0.0;
+        }
 
         imageStore(spectrum_image, pixel_coord, vec4(res, 0.0, 0.0, 0.0));
     } else {
