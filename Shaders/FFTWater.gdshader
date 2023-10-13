@@ -1,12 +1,16 @@
 shader_type spatial;
+render_mode unshaded;
 
 uniform sampler2D outputImage;
+uniform sampler2D normalImage;
 varying vec3 world_pos;
 uniform float height_scale = 0.15;
+uniform float resolution;
 
 uniform vec3 ambientLightColor : source_color;
 uniform float ambientReflectance;
 uniform vec3 diffuseColor : source_color;
+uniform float diffuseFactor;
 uniform vec3 lightColor : source_color;
 uniform vec3 specColor : source_color;
 uniform vec3 specLightColor : source_color;
@@ -42,6 +46,20 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float height = texture(outputImage, world_pos.xz).r;
 	VERTEX.y += height * height_scale;
+	vec3 center = texture(normalImage, world_pos.xz).xyz;
+	/*
+	vec3 right = vec3(1, 0, 0) * texture(normalImage, vec2(max(world_pos.x + 1.0, resolution - 1.0), world_pos.z)).xyz - center;
+	vec3 left = vec3(-1, 0, 0) * texture(normalImage, vec2(min(world_pos.x - 1.0, 0.0), world_pos.z)).xyz - center;
+	vec3 top = vec3(0, 0, -1) * texture(normalImage, vec2(world_pos.x, min(world_pos.z - 1.0, 0.0))).xyz - center;
+	vec3 bottom = vec3(0, 0, 1) * texture(normalImage, vec2(world_pos.x, max(world_pos.z + 1.0, resolution - 1.0))).xyz - center;
+	
+	vec3 top_right = cross(right, top);
+	vec3 top_left = cross(top, left);
+	vec3 bottom_left = cross(left, bottom);
+	vec3 bottom_right = cross(bottom, right);
+	NORMAL = vec3(top_right + top_left + bottom_right + bottom_left);
+	*/
+	NORMAL = vec3(-center.x, 1.0, -center.y);
 }
 
 void fragment() {
@@ -50,7 +68,7 @@ void fragment() {
 	vec3 ambient = ambientReflectance * ambientLightColor;
 	vec3 L = normalize(lightPos - P);
 	float diffuseLight = max(dot(N, L), 0.0);
-	vec3 diffuse = diffuseColor * lightColor * diffuseLight;
+	vec3 diffuse = diffuseColor * lightColor * diffuseLight * diffuseFactor;
 	vec3 H = normalize(L + VIEW);
 	float facing = 0.0;
 	if (dot(N, L) > 0.0) {

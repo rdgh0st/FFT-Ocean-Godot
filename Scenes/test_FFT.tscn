@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3 uid="uid://kaefq8k8h6wl"]
+[gd_scene load_steps=12 format=3 uid="uid://kaefq8k8h6wl"]
 
 [ext_resource type="Shader" path="res://Shaders/FFTWater.gdshader" id="1_6gfy4"]
+[ext_resource type="Texture2D" uid="uid://bcwfg5mk3hs83" path="res://addons/AllSkyFree/Skyboxes/AllSkyFree_Sky_EpicBlueSunset_Equirect.png" id="2_ku6l3"]
 [ext_resource type="Script" path="res://FFTWater_Test.gd" id="2_l2wr8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
@@ -21,23 +22,39 @@ noise = SubResource("FastNoiseLite_jpiv8")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5e6qt"]
 render_priority = 0
 shader = ExtResource("1_6gfy4")
-shader_parameter/height_scale = 0.1
-shader_parameter/ambientLightColor = Color(0.129412, 0, 0.917647, 1)
-shader_parameter/ambientReflectance = 1.0
-shader_parameter/diffuseColor = Color(1, 1, 1, 1)
+shader_parameter/height_scale = 0.12
+shader_parameter/resolution = 128.0
+shader_parameter/ambientLightColor = Color(0.133333, 0.513726, 0.878431, 1)
+shader_parameter/ambientReflectance = 0.2
+shader_parameter/diffuseColor = Color(0, 0.184314, 0.266667, 1)
+shader_parameter/diffuseFactor = 0.2
 shader_parameter/lightColor = Color(1, 1, 1, 1)
-shader_parameter/specColor = null
-shader_parameter/specLightColor = null
-shader_parameter/lightPos = null
-shader_parameter/shininess = null
+shader_parameter/specColor = Color(0.929412, 1, 0.996078, 1)
+shader_parameter/specLightColor = Color(1, 1, 1, 1)
+shader_parameter/lightPos = Vector3(0, 100, 0)
+shader_parameter/shininess = 5.0
 shader_parameter/numWaves = 1.0
 shader_parameter/ampMultiplier = null
 shader_parameter/freqMultiplier = null
 shader_parameter/speed = null
-shader_parameter/fresnelBias = null
-shader_parameter/fresnelScale = null
-shader_parameter/fresnelPower = null
+shader_parameter/fresnelBias = 0.01
+shader_parameter/fresnelScale = 0.05
+shader_parameter/fresnelPower = 1.0
 shader_parameter/outputImage = SubResource("NoiseTexture2D_npyqd")
+shader_parameter/panorama = ExtResource("2_ku6l3")
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_c8aed"]
+panorama = ExtResource("2_ku6l3")
+
+[sub_resource type="Sky" id="Sky_hcv8u"]
+sky_material = SubResource("PanoramaSkyMaterial_c8aed")
+process_mode = 1
+
+[sub_resource type="Environment" id="Environment_s6y0h"]
+background_mode = 2
+sky = SubResource("Sky_hcv8u")
+tonemap_mode = 2
+glow_enabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D"]
 mesh = SubResource("PlaneMesh_c8ucf")
@@ -52,17 +69,25 @@ enhancementFactor = 3.3
 inputfreq = 1.5
 resolution = 128.0
 oceanSize = 128.0
-lowCutoff = 0.1
-highCutoff = 100.0
+highCutoff = 2000.0
 depth = 1.5
 
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_s6y0h")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
 [node name="TextureRect" type="TextureRect" parent="."]
+visible = false
 offset_right = 554.0
 offset_bottom = 640.0
 expand_mode = 1
 stretch_mode = 5
 
 [node name="TextureRect2" type="TextureRect" parent="."]
+visible = false
 offset_left = 599.0
 offset_right = 1153.0
 offset_bottom = 640.0
@@ -70,4 +95,4 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(-0.0505929, 0.470409, -0.880997, 0, 0.882127, 0.471012, 0.998719, 0.0238299, -0.0446294, -88.6139, 54.9134, 11.6902)
+transform = Transform3D(-4.37114e-08, 0.393942, -0.919135, 0, 0.919136, 0.393942, 1, 1.72198e-08, -4.01767e-08, -73.459, 18.083, 0)

@@ -35,9 +35,12 @@ var normal_pipeline: RID;
 var initTime: float;
 var deltaTime: float;
 
+var prevParams;
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initTime = Time.get_unix_time_from_system();
+	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
 	init_gpu();
 
 func init_gpu():
@@ -55,6 +58,14 @@ func init_gpu():
 	var normal_shader_spirv: RDShaderSPIRV = normal_shader_file_data.get_spirv();
 	normal_shader_rid = rd.shader_create_from_spirv(normal_shader_spirv);
 	
+	generate_init_spectrum();
+	generate_disp();
+
+func _notification(what):
+	if what == NOTIFICATION_PREDELETE:
+		cleanup_gpu();
+
+func generate_init_spectrum():
 	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];
 	
 	var params := PackedFloat32Array(input).to_byte_array();
@@ -96,17 +107,6 @@ func init_gpu():
 	var image_new := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, image_output_bytes);
 	var tex := ImageTexture.create_from_image(image_new);
 	$TextureRect.texture = tex;
-	var sum = 0;
-	#for x in resolution:
-	#	for y in resolution:
-	#		sum += image_new.get_pixel(x, y).r;
-	#		print("adding ", image_new.get_pixel(x, y).r, "to get ", sum, " at ", x, y);
-	#print(sum);
-	generate_disp();
-
-func _notification(what):
-	if what == NOTIFICATION_PREDELETE:
-		cleanup_gpu();
 
 func generate_disp():
 	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];
@@ -245,6 +245,7 @@ func generate_brute_force():
 	
 	
 	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
+	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
 	
 	print(tex);
 
@@ -286,6 +287,11 @@ func cleanup_gpu():
 	rd = null;
 
 func _process(delta):
+	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
+	if (currentParams != prevParams):
+		prevParams = currentParams;
+		generate_init_spectrum();
+	
 	if (Input.is_action_just_pressed("move_backward")):
 		generate_disp();
 	generate_disp();
