@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://fibn16v04li4"
+path="res://.godot/imported/ButterflyTexture.glsl-988b20a5153982de7f569a2ff93ae78b.res"
+
+[deps]
+
+source_file="res://Shaders/ButterflyTexture.glsl"
+dest_files=["res://.godot/imported/ButterflyTexture.glsl-988b20a5153982de7f569a2ff93ae78b.res"]
+
+[params]
+

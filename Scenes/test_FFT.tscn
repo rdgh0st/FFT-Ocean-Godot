@@ -6,8 +6,8 @@
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
 size = Vector2(128, 128)
-subdivide_width = 128
-subdivide_depth = 128
+subdivide_width = 265
+subdivide_depth = 256
 
 [sub_resource type="Gradient" id="Gradient_eapve"]
 
@@ -22,24 +22,26 @@ noise = SubResource("FastNoiseLite_jpiv8")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5e6qt"]
 render_priority = 0
 shader = ExtResource("1_6gfy4")
-shader_parameter/height_scale = 0.12
+shader_parameter/height_scale = 0.2
 shader_parameter/resolution = 128.0
-shader_parameter/ambientLightColor = Color(0.133333, 0.513726, 0.878431, 1)
-shader_parameter/ambientReflectance = 0.2
-shader_parameter/diffuseColor = Color(0, 0.184314, 0.266667, 1)
+shader_parameter/ambientLightColor = Color(0, 0.65, 0.75, 1)
+shader_parameter/ambientReflectance = 0.3
+shader_parameter/diffuseColor = Color(0.5, 0.65, 0.75, 1)
 shader_parameter/diffuseFactor = 0.2
 shader_parameter/lightColor = Color(1, 1, 1, 1)
-shader_parameter/specColor = Color(0.929412, 1, 0.996078, 1)
-shader_parameter/specLightColor = Color(1, 1, 1, 1)
-shader_parameter/lightPos = Vector3(0, 100, 0)
-shader_parameter/shininess = 5.0
+shader_parameter/specColor = Color(1, 0.25, 0, 1)
+shader_parameter/specFactor = 0.001
+shader_parameter/lightPos = Vector3(0, 1000, -1000)
+shader_parameter/lightDir = Vector3(0, 0, 0)
+shader_parameter/shininess = 50.0
+shader_parameter/exposure = 0.05
 shader_parameter/numWaves = 1.0
 shader_parameter/ampMultiplier = null
 shader_parameter/freqMultiplier = null
 shader_parameter/speed = null
-shader_parameter/fresnelBias = 0.01
-shader_parameter/fresnelScale = 0.05
-shader_parameter/fresnelPower = 1.0
+shader_parameter/fresnelBias = 0.02
+shader_parameter/fresnelScale = 0.98
+shader_parameter/fresnelPower = 5.0
 shader_parameter/outputImage = SubResource("NoiseTexture2D_npyqd")
 shader_parameter/panorama = ExtResource("2_ku6l3")
 
@@ -62,12 +64,13 @@ surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
 script = ExtResource("2_l2wr8")
 compute_shader = "res://Shaders/JONSWAP_test.glsl"
 displacement_shader = "res://Shaders/SpectrumUpdate.glsl"
-brute_force = "res://Shaders/BruteForce_Add.glsl"
+brute_force = "res://Shaders/FFT.glsl"
+butterfly_texture_shader = "res://Shaders/ButterflyTexture.glsl"
 fetch = 250000.0
 windSpeed = 10.0
 enhancementFactor = 3.3
 inputfreq = 1.5
-resolution = 128.0
+resolution = 256.0
 oceanSize = 128.0
 highCutoff = 2000.0
 depth = 1.5
@@ -80,14 +83,11 @@ transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -
 shadow_enabled = true
 
 [node name="TextureRect" type="TextureRect" parent="."]
-visible = false
 offset_right = 554.0
 offset_bottom = 640.0
-expand_mode = 1
-stretch_mode = 5
+expand_mode = 2
 
 [node name="TextureRect2" type="TextureRect" parent="."]
-visible = false
 offset_left = 599.0
 offset_right = 1153.0
 offset_bottom = 640.0

@@ -7,7 +7,7 @@ const float PI = 3.14159265359;
 const float g = 9.81;
 
 layout(set = 0, binding = 10, r32f) readonly uniform image2D spectrum_image;
-layout(set = 0, binding = 11, rg32f) writeonly uniform image2D displacement_image;
+layout(set = 0, binding = 11, rgba32f) writeonly uniform image2D displacement_image;
 layout(set = 0, binding = 12, r32f) writeonly uniform image2D slope_image;
 
 layout(set = 0, binding = 0) buffer SpectrumParameters {
