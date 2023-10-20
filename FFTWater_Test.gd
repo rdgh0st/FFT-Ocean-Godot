@@ -3,6 +3,7 @@ extends MeshInstance3D
 @export_file("*.glsl") var displacement_shader;
 @export_file("*.glsl") var brute_force;
 @export_file("*.glsl") var butterfly_texture_shader;
+@export_file("*.glsl") var inversion_shader;
 @export var frameSkip: float;
 var currentFrame: float;
 @export var fetch : float;
@@ -36,6 +37,7 @@ var normal_uniform_set: RID;
 var normal_pipeline: RID;
 
 var butterfly_shader_rid: RID;
+var inversion_shader_rid: RID;
 
 var initTime: float;
 var deltaTime: float;
@@ -67,6 +69,10 @@ func init_gpu():
 	var butterfly_shader_spirv: RDShaderSPIRV = butterfly_shader_file_data.get_spirv();
 	butterfly_shader_rid = rd.shader_create_from_spirv(butterfly_shader_spirv);
 	
+	var inversion_shader_file_data: RDShaderFile = load(inversion_shader);
+	var inversion_shader_spirv: RDShaderSPIRV = inversion_shader_file_data.get_spirv();
+	inversion_shader_rid = rd.shader_create_from_spirv(inversion_shader_spirv);
+	
 	generate_init_spectrum();
 	#generate_disp();
 
@@ -84,12 +90,12 @@ func generate_init_spectrum():
 	uniform.binding = 0;
 	uniform.add_id(buffer);
 	
-	var image = Image.create(resolution, resolution, false, Image.FORMAT_RF);
+	var image = Image.create(resolution, resolution, false, Image.FORMAT_RGF);
 	
 	var imageFormat = RDTextureFormat.new();
 	imageFormat.width = resolution;
 	imageFormat.height = resolution;
-	imageFormat.format = RenderingDevice.DATA_FORMAT_R32_SFLOAT;
+	imageFormat.format = RenderingDevice.DATA_FORMAT_R32G32_SFLOAT;
 	imageFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	var image_rid = rd.texture_create(imageFormat, RDTextureView.new(), image.get_data());
@@ -113,7 +119,7 @@ func generate_init_spectrum():
 	rd.sync();
 	
 	var image_output_bytes := rd.texture_get_data(image_rid, 0);
-	var image_new := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, image_output_bytes);
+	var image_new := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGF, image_output_bytes);
 	var tex := ImageTexture.create_from_image(image_new);
 	$TextureRect.texture = tex;
 	
@@ -147,7 +153,7 @@ func generate_init_spectrum():
 	var butterfly_image_bytes := rd.texture_get_data(butterfly_rid, 0);
 	var butterfly_image := Image.create_from_data((log(resolution) / log(2)), resolution, false, Image.FORMAT_RGBAF, butterfly_image_bytes);
 	var butterfly_tex := ImageTexture.create_from_image(butterfly_image);
-	$TextureRect.texture = butterfly_tex;
+	#$TextureRect.texture = butterfly_tex;
 
 func generate_disp():
 	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];
@@ -212,6 +218,7 @@ func generate_disp():
 	FFT();
 	
 func FFT():
+	var ping = true; # ping means default values
 	var test = [0, 0, 0, 0];
 	var testParams := PackedFloat32Array(test).to_byte_array();
 	var testBuffer = rd.storage_buffer_create(test.size(), test);
@@ -234,6 +241,21 @@ func FFT():
 	heightUniform.binding = 13;
 	heightUniform.add_id(height_rid);
 	
+	var SlopeImage = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
+	
+	var slopeFormat = RDTextureFormat.new();
+	slopeFormat.width = resolution;
+	slopeFormat.height = resolution;
+	slopeFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
+	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	
+	var slope_rid = rd.texture_create(slopeFormat, RDTextureView.new(), SlopeImage.get_data());
+	
+	var slopeNormalUniform = RDUniform.new();
+	slopeNormalUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
+	slopeNormalUniform.binding = 14;
+	slopeNormalUniform.add_id(slope_rid);
+	
 	var direction = 1.0;
 	
 	for stage in (log(resolution) / log(2)):
@@ -245,7 +267,7 @@ func FFT():
 		uniform.binding = 0;
 		uniform.add_id(buffer);
 		
-		normal_uniform_set = rd.uniform_set_create([uniform, displacementUniform, heightUniform, testUniform, butterflyUniform], normal_shader_rid, 0);
+		normal_uniform_set = rd.uniform_set_create([uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], normal_shader_rid, 0);
 		normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 		
 		var compute_list := rd.compute_list_begin();
@@ -261,6 +283,11 @@ func FFT():
 		var temp = displacementUniform.binding;
 		displacementUniform.binding = heightUniform.binding;
 		heightUniform.binding = temp;
+		
+		var temp2 = slopeUniform.binding;
+		slopeUniform.binding = slopeNormalUniform.binding;
+		slopeNormalUniform.binding = temp2;
+		ping = !ping;
 	
 	direction = 0.0;
 	
@@ -273,7 +300,7 @@ func FFT():
 		uniform.binding = 0;
 		uniform.add_id(buffer);
 		
-		normal_uniform_set = rd.uniform_set_create([uniform, displacementUniform, heightUniform, testUniform, butterflyUniform], normal_shader_rid, 0);
+		normal_uniform_set = rd.uniform_set_create([uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], normal_shader_rid, 0);
 		normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 		
 		var compute_list := rd.compute_list_begin();
@@ -282,21 +309,49 @@ func FFT():
 		rd.compute_list_dispatch(compute_list, resolution / 16, resolution / 16, 1);
 		rd.compute_list_end();
 		rd.submit();
-		#await get_tree().create_timer(3).timeout
 		rd.sync();
 		
 		var temp = displacementUniform.binding;
 		displacementUniform.binding = heightUniform.binding;
 		heightUniform.binding = temp;
+		
+		var temp2 = slopeUniform.binding;
+		slopeUniform.binding = slopeNormalUniform.binding;
+		slopeNormalUniform.binding = temp2;
+		ping = !ping;
 	
+	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];
+	var params := PackedFloat32Array(input).to_byte_array();
+	var buffer = rd.storage_buffer_create(params.size(), params);
+	var uniform := RDUniform.new();
+	uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER;
+	uniform.binding = 0;
+	uniform.add_id(buffer);
+		
+	normal_uniform_set = rd.uniform_set_create([uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], inversion_shader_rid, 0);
+	normal_pipeline = rd.compute_pipeline_create(inversion_shader_rid);
+		
+	var compute_list := rd.compute_list_begin();
+	rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
+	rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
+	rd.compute_list_dispatch(compute_list, resolution / 16, resolution / 16, 1);
+	rd.compute_list_end();
+	rd.submit();
+	rd.sync();
 	
 	var normal_output_bytes = rd.texture_get_data(height_rid, 0);
-	var normal_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, normal_output_bytes);
-	var tex := ImageTexture.create_from_image(normal_image);
+	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
+	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
+	var tex = ImageTexture.create_from_image(normal_image);
 	$TextureRect.texture = tex;
-		
-		
+	
+	var slope_output_bytes = rd.texture_get_data(slope_rid, 0);
+	var slope_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, slope_output_bytes);
+	var tex2 := ImageTexture.create_from_image(slope_image);
+	$TextureRect2.texture = tex2;
+	
 	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
+	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
 	
 func generate_brute_force():
 	var input = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth];

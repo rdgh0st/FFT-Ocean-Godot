@@ -6,7 +6,7 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 const float PI = 3.14159265359;
 const float g = 9.81;
 
-layout(set = 0, binding = 10, r32f) writeonly uniform image2D spectrum_image;
+layout(set = 0, binding = 10, rg32f) writeonly uniform image2D spectrum_image;
 
 layout(set = 0, binding = 0) buffer SpectrumParameters {
     float fetch;
@@ -67,12 +67,12 @@ void main() {
         float dispersionK = sqrt(g * kLength * tanh(min(kLength * params.depth, 20)));
         float JSroot = sqrt(JONSWAP(dispersionK));
         vec2 gauss = UniformToGaussian(nrand(normalize(k)), nrand(normalize(pixel_coord) + 0.0001));
-        float res = coeff * gauss.x * gauss.y * JSroot;
-        if (isinf(res) || isnan(res)) {
-            res = 0.0;
+        vec2 res = coeff * vec2(gauss.x, gauss.y) * JSroot;
+        if (isinf(res.x) || isnan(res.x) || isinf(res.y) || isnan(res.y)) {
+            res = vec2(0.0);
         }
 
-        imageStore(spectrum_image, pixel_coord, vec4(res, 0.0, 0.0, 0.0));
+        imageStore(spectrum_image, pixel_coord, vec4(res, 0.0, 0.0));
     } else {
         imageStore(spectrum_image, pixel_coord, vec4(0.0));
     }

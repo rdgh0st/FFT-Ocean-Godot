@@ -6,9 +6,9 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 const float PI = 3.14159265359;
 const float g = 9.81;
 
-layout(set = 0, binding = 10, r32f) readonly uniform image2D spectrum_image;
+layout(set = 0, binding = 10, rg32f) readonly uniform image2D spectrum_image;
 layout(set = 0, binding = 11, rgba32f) writeonly uniform image2D displacement_image;
-layout(set = 0, binding = 12, r32f) writeonly uniform image2D slope_image;
+layout(set = 0, binding = 12, rgba32f) writeonly uniform image2D slope_image;
 
 layout(set = 0, binding = 0) buffer SpectrumParameters {
     float fetch;
@@ -30,8 +30,8 @@ vec2 MultiplyComplex(vec2 a, vec2 b) {
 
 void main() {
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
-    vec2 h0 = vec2(imageLoad(spectrum_image, pixel_coord).r, 0.0);
-    vec2 h0star = vec2(imageLoad(spectrum_image, (int(params.resolution) - pixel_coord) % (int (params.resolution) - 1)).r, 0.0);
+    vec2 h0 = vec2(imageLoad(spectrum_image, pixel_coord).rg);
+    vec2 h0star = vec2(imageLoad(spectrum_image, (int(params.resolution) - pixel_coord) % (int (params.resolution) - 1)).rg);
     h0star.y *= -1.0;
 
     float halfN = params.resolution / 2.0f;

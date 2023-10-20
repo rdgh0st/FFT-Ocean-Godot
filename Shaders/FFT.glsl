@@ -22,9 +22,9 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
 } params;
 
 layout(set = 0, binding = 11, rgba32f) readonly uniform image2D displacement_image;
-//layout(set = 0, binding = 12, rgba32f) readonly uniform image2D slope_image;
+layout(set = 0, binding = 12, rgba32f) readonly uniform image2D slope_image;
 layout(set = 0, binding = 13, rgba32f) writeonly uniform image2D heightmap_image;
-//layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
+layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
 layout(set = 0, binding = 15) buffer TestOutput {
     float x;
     float y;
@@ -38,7 +38,7 @@ vec2 MultiplyComplex(vec2 a, vec2 b) {
 }
 
 vec2 AddComplex(vec2 a, vec2 b) {
-    return vec2(a.x + b.x, a.y + b.y);
+    return a + b;
 }
 
 void horizontalFFT() {
@@ -50,14 +50,18 @@ void horizontalFFT() {
     vec2 twiddle = vec2(butterflyData.x, butterflyData.y);
 
     vec2 h = AddComplex(p, MultiplyComplex(twiddle, q));
-    imageStore(heightmap_image, x, vec4(h, 0, 1));
 
-    /*
+    vec2 p2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).ba;
+    vec2 q2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).ba;
+
+    vec2 h2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
+
+    imageStore(heightmap_image, x, vec4(h, h2));
+
     p = imageLoad(slope_image, ivec2(butterflyData.z, x.y)).rg;
     q = imageLoad(slope_image, ivec2(butterflyData.w, x.y)).rg;
     vec2 s = AddComplex(p, MultiplyComplex(twiddle, q));
     imageStore(triangle_image, x, vec4(s, 0, 1));
-    */
 }
 
 void verticalFFT() {
@@ -69,14 +73,18 @@ void verticalFFT() {
     vec2 twiddle = vec2(butterflyData.x, butterflyData.y);
 
     vec2 h = AddComplex(p, MultiplyComplex(twiddle, q));
-    imageStore(heightmap_image, x, vec4(h, 0, 1));
 
-    /*
+    vec2 p2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).ba;
+    vec2 q2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).ba;
+
+    vec2 h2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
+
+    imageStore(heightmap_image, x, vec4(h, h2));
+
     p = imageLoad(slope_image, ivec2(x.x, butterflyData.z)).rg;
     q = imageLoad(slope_image, ivec2(x.x, butterflyData.w)).rg;
     vec2 s = AddComplex(p, MultiplyComplex(twiddle, q));
     imageStore(triangle_image, x, vec4(s, 0, 1));
-    */
 }
 
 void main() {

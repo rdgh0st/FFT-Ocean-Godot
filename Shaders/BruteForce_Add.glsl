@@ -20,10 +20,10 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float depth;
 } params;
 
-layout(set = 0, binding = 11, rg32f) readonly uniform image2D displacement_image;
-layout(set = 0, binding = 12, r32f) readonly uniform image2D slope_image;
-layout(set = 0, binding = 13, rgba16f) writeonly uniform image2D heightmap_image;
-layout(set = 0, binding = 14, rgba16f) writeonly uniform image2D triangle_image;
+layout(set = 0, binding = 11, rgba32f) readonly uniform image2D displacement_image;
+layout(set = 0, binding = 12, rgba32f) readonly uniform image2D slope_image;
+layout(set = 0, binding = 13, rgba32f) writeonly uniform image2D heightmap_image;
+layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
 layout(set = 0, binding = 15) buffer TestOutput {
     float x;
     float y;

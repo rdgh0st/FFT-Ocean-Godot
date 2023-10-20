@@ -17,15 +17,13 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float depth;
 } params;
 
-layout(set = 0, binding = 11, rgba32f) readonly uniform image2D displacement_image;
-layout(set = 0, binding = 13, rgba32f) writeonly uniform image2D heightmap_image;
+layout(set = 0, binding = 11, rgba32f) writeonly uniform image2D displacement_image;
+layout(set = 0, binding = 13, rgba32f) readonly uniform image2D heightmap_image;
 
 void main() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
-    float permutations[] = { 1.0, -1.0 };
-    int index = int(mod((int (x.x + x.y)), 2));
-    float perm = permutations[index];
+    float perm = 1.0 - 2.0 * ((x.x + x.y) % 2);
 
-    float h = imageLoad(displacement_image, x).r;
-    imageStore(heightmap_image, x, vec4(perm * (h / float(params.resolution * params.resolution)), perm * (h / float(params.resolution * params.resolution)), perm * (h / float(params.resolution * params.resolution)), 1));
+    vec4 h = imageLoad(heightmap_image, x);
+    imageStore(displacement_image, x, vec4(perm * (h.x), perm * (h.y), perm * (h.z), 1));
 }

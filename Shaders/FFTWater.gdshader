@@ -6,6 +6,7 @@ uniform sampler2D normalImage;
 varying vec3 world_pos;
 uniform float height_scale = 0.15;
 uniform float resolution;
+uniform float lambda;
 
 uniform vec3 ambientLightColor : source_color;
 uniform float ambientReflectance;
@@ -45,9 +46,11 @@ vec2 uv_sphere(vec3 v)
 }
 
 void vertex() {
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	float height = texture(outputImage, world_pos.xz).r;
-	VERTEX.y = height * height_scale;
+	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / 128.0;
+	float height = texture(outputImage, world_pos.xz).x;
+	float dispX = texture(outputImage, world_pos.xz).z * lambda;
+	float dispZ = texture(outputImage, world_pos.xz).y * lambda;
+	VERTEX += vec3(dispX, height * height_scale, dispZ);
 	vec3 center = texture(normalImage, world_pos.xz).xyz;
 	/*
 	vec3 right = vec3(1, 0, 0) * texture(normalImage, vec2(max(world_pos.x + 1.0, resolution - 1.0), world_pos.z)).xyz - center;

@@ -30,6 +30,10 @@ int reverse(int i) {
     return res;
 }
 
+vec2 ComplexExp(vec2 a) {
+    return vec2(cos(a.y), sin(a.y)) * exp(a.x);
+}
+
 void main() {
     vec2 pixel_coord = gl_GlobalInvocationID.xy;
     float k = mod(((pixel_coord.y * params.resolution) / pow(2.0, pixel_coord.x + 1)), params.resolution);
@@ -53,4 +57,13 @@ void main() {
             imageStore(butterflyTex, ivec2(pixel_coord), vec4(twiddle.x, twiddle.y, pixel_coord.y - span, pixel_coord.y));
         }
     }
+    /*
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    int b = int(params.resolution) >> (id.x + 1);
+    vec2 mult = 2.0 * PI * vec2(0.0, 1.0) / params.resolution;
+    int i = (b * (id.y / b) + id.y % b) % int(params.resolution);
+    vec2 twiddle = ComplexExp(-mult * ((id.y / b) * b));
+    imageStore(butterflyTex, id, vec4(twiddle, i, i + b));
+    imageStore(butterflyTex, ivec2(id.x, id.y + params.resolution / 2), vec4(-twiddle, i, i + b));
+    */
 }
