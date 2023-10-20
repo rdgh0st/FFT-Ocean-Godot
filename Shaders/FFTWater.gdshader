@@ -5,7 +5,7 @@ uniform sampler2D outputImage;
 uniform sampler2D normalImage;
 varying vec3 world_pos;
 uniform float height_scale = 0.15;
-uniform float resolution;
+uniform float oceanSize;
 uniform float lambda;
 
 uniform vec3 ambientLightColor : source_color;
@@ -46,7 +46,7 @@ vec2 uv_sphere(vec3 v)
 }
 
 void vertex() {
-	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / 128.0;
+	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / oceanSize;
 	float height = texture(outputImage, world_pos.xz).x;
 	float dispX = texture(outputImage, world_pos.xz).z * lambda;
 	float dispZ = texture(outputImage, world_pos.xz).y * lambda;
