@@ -38,6 +38,7 @@ var normal_pipeline: RID;
 
 var butterfly_shader_rid: RID;
 var inversion_shader_rid: RID;
+var slope_rid: RID;
 
 var initTime: float;
 var deltaTime: float;
@@ -187,7 +188,7 @@ func generate_disp():
 	slopeFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
 	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
-	var slope_rid = rd.texture_create(slopeFormat, RDTextureView.new(), SlopeImage.get_data());
+	slope_rid = rd.texture_create(slopeFormat, RDTextureView.new(), SlopeImage.get_data());
 	
 	slopeUniform = RDUniform.new();
 	slopeUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
@@ -249,12 +250,12 @@ func FFT():
 	slopeFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
 	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
-	var slope_rid = rd.texture_create(slopeFormat, RDTextureView.new(), SlopeImage.get_data());
+	var triangle_rid = rd.texture_create(slopeFormat, RDTextureView.new(), SlopeImage.get_data());
 	
 	var slopeNormalUniform = RDUniform.new();
 	slopeNormalUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
 	slopeNormalUniform.binding = 14;
-	slopeNormalUniform.add_id(slope_rid);
+	slopeNormalUniform.add_id(triangle_rid);
 	
 	var direction = 1.0;
 	
