@@ -15,6 +15,7 @@ uniform vec3 diffuseColor : source_color;
 uniform float diffuseFactor;
 uniform vec3 lightColor : source_color;
 uniform vec3 specColor : source_color;
+uniform vec3 specLightColor : source_color;
 uniform float specFactor;
 uniform vec3 lightPos;
 uniform vec3 lightDir;
@@ -73,7 +74,6 @@ vec3 HDR(vec3 color) {
 }
 
 void fragment() {
-	/*
 	vec3 P = VERTEX;
 	vec3 N = normalize(NORMAL);
 	vec3 ambient = ambientReflectance * ambientLightColor;
@@ -97,7 +97,7 @@ void fragment() {
 	vec4 reflectance = texture(panorama, uv);
 	
 	ALBEDO = ambient + diffuse + specular + (reflectance.rgb * fresnel);
-	*/
+	/*
 	vec3 N = normalize(NORMAL);
 	vec3 L = normalize(lightPos - world_pos);
 	vec3 H = L + normalize(-VIEW.xyz);
@@ -109,4 +109,5 @@ void fragment() {
 	vec3 color = ambientLightColor * ambientReflectance + diffuseColor * diffuseFactor * max(D, 0.0) + (facing ? specColor * specFactor * max(pow(dot(N, H), shininess), 0.0) : vec3(0.0, 0.0, 0.0));
 	color *= (1.0 - fog) + vec3(0.25, 0.75, 0.65) * fog;
 	ALBEDO = color;
+	*/
 }
