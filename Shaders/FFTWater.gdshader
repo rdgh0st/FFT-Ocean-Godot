@@ -7,6 +7,7 @@ varying vec3 world_pos;
 uniform float height_scale = 0.15;
 uniform float oceanSize;
 uniform float lambda;
+uniform float lambdaClamp;
 
 uniform vec3 ambientLightColor : source_color;
 uniform float ambientReflectance;
@@ -48,8 +49,8 @@ vec2 uv_sphere(vec3 v)
 void vertex() {
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / oceanSize;
 	float height = texture(outputImage, world_pos.xz).x;
-	float dispX = texture(outputImage, world_pos.xz).z * lambda;
-	float dispZ = texture(outputImage, world_pos.xz).y * lambda;
+	float dispX = min(texture(outputImage, world_pos.xz).z * lambda, lambdaClamp);
+	float dispZ = min(texture(outputImage, world_pos.xz).y * lambda, lambdaClamp);
 	VERTEX += vec3(dispX, height * height_scale, dispZ);
 	vec3 center = texture(normalImage, world_pos.xz).xyz;
 	/*

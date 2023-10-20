@@ -42,6 +42,8 @@ var slope_rid: RID;
 
 var params_buffer: RID;
 var params_uniform: RDUniform;
+var heightUniform: RDUniform;
+var slopeNormalUniform: RDUniform;
 
 var initTime: float;
 var deltaTime: float;
@@ -65,10 +67,6 @@ func init_gpu():
 	var disp_shader_spirv: RDShaderSPIRV = disp_shader_file_data.get_spirv();
 	disp_shader_rid = rd.shader_create_from_spirv(disp_shader_spirv);
 	
-	var normal_shader_file_data: RDShaderFile = load(brute_force);
-	var normal_shader_spirv: RDShaderSPIRV = normal_shader_file_data.get_spirv();
-	normal_shader_rid = rd.shader_create_from_spirv(normal_shader_spirv);
-	
 	var butterfly_shader_file_data: RDShaderFile = load(butterfly_texture_shader);
 	var butterfly_shader_spirv: RDShaderSPIRV = butterfly_shader_file_data.get_spirv();
 	butterfly_shader_rid = rd.shader_create_from_spirv(butterfly_shader_spirv);
@@ -76,6 +74,11 @@ func init_gpu():
 	var inversion_shader_file_data: RDShaderFile = load(inversion_shader);
 	var inversion_shader_spirv: RDShaderSPIRV = inversion_shader_file_data.get_spirv();
 	inversion_shader_rid = rd.shader_create_from_spirv(inversion_shader_spirv);
+	
+	var normal_shader_file_data: RDShaderFile = load(brute_force);
+	var normal_shader_spirv: RDShaderSPIRV = normal_shader_file_data.get_spirv();
+	normal_shader_rid = rd.shader_create_from_spirv(normal_shader_spirv);
+	normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 	
 	generate_init_spectrum();
 	#generate_disp();
@@ -108,25 +111,6 @@ func generate_init_spectrum():
 	imageUniform.binding = 10;
 	imageUniform.add_id(image_rid);
 	
-	uniform_set = rd.uniform_set_create([params_uniform, imageUniform], shader_rid, 0);
-	
-	pipeline = rd.compute_pipeline_create(shader_rid);
-	
-	
-	
-	var compute_list := rd.compute_list_begin();
-	rd.compute_list_bind_compute_pipeline(compute_list, pipeline);
-	rd.compute_list_bind_uniform_set(compute_list, uniform_set, 0);
-	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
-	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
-	
-	var image_output_bytes := rd.texture_get_data(image_rid, 0);
-	var image_new := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGF, image_output_bytes);
-	var tex := ImageTexture.create_from_image(image_new);
-	$TextureRect.texture = tex;
-	
 	var ButterflyImage = Image.create((log(resolution) / log(2)), resolution, false, Image.FORMAT_RGBAF);
 	
 	var butterflyFormat = RDTextureFormat.new();
@@ -140,30 +124,6 @@ func generate_init_spectrum():
 	butterflyUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
 	butterflyUniform.binding = 16;
 	butterflyUniform.add_id(butterfly_rid);
-	
-	var butterfly_uniform_set = rd.uniform_set_create([params_uniform, butterflyUniform], butterfly_shader_rid, 0);
-	
-	var butterfly_pipeline = rd.compute_pipeline_create(butterfly_shader_rid);
-	
-	compute_list = rd.compute_list_begin();
-	rd.compute_list_bind_compute_pipeline(compute_list, butterfly_pipeline);
-	rd.compute_list_bind_uniform_set(compute_list, butterfly_uniform_set, 0);
-	print(log(resolution) / log(2));
-	rd.compute_list_dispatch(compute_list, (log(resolution) / log(2)), resolution / 8, 1);
-	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
-	
-	var butterfly_image_bytes := rd.texture_get_data(butterfly_rid, 0);
-	var butterfly_image := Image.create_from_data((log(resolution) / log(2)), resolution, false, Image.FORMAT_RGBAF, butterfly_image_bytes);
-	var butterfly_tex := ImageTexture.create_from_image(butterfly_image);
-	#$TextureRect.texture = butterfly_tex;
-
-func generate_disp():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
-	
-	var params: PackedByteArray = input.to_byte_array();
-	rd.buffer_update(params_buffer, 0, params.size(), params);
 	
 	var DisplacementImage = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
 	
@@ -194,6 +154,72 @@ func generate_disp():
 	slopeUniform.binding = 12;
 	slopeUniform.add_id(slope_rid);
 	
+	var HeightMap = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
+		
+	var heightFormat = RDTextureFormat.new();
+	heightFormat.width = resolution;
+	heightFormat.height = resolution;
+	heightFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
+	heightFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+		
+	var height_rid = rd.texture_create(heightFormat, RDTextureView.new(), [HeightMap.get_data()]);
+	heightUniform = RDUniform.new();
+	heightUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
+	heightUniform.binding = 13;
+	heightUniform.add_id(height_rid);
+	
+	var SlopeImage2 = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
+	
+	var slopeFormat2 = RDTextureFormat.new();
+	slopeFormat2.width = resolution;
+	slopeFormat2.height = resolution;
+	slopeFormat2.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
+	slopeFormat2.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	
+	var triangle_rid = rd.texture_create(slopeFormat2, RDTextureView.new(), [SlopeImage2.get_data()]);
+	
+	slopeNormalUniform = RDUniform.new();
+	slopeNormalUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
+	slopeNormalUniform.binding = 14;
+	slopeNormalUniform.add_id(triangle_rid);
+	
+	uniform_set = rd.uniform_set_create([params_uniform, imageUniform], shader_rid, 0);
+	
+	pipeline = rd.compute_pipeline_create(shader_rid);
+	
+	
+	
+	var compute_list := rd.compute_list_begin();
+	rd.compute_list_bind_compute_pipeline(compute_list, pipeline);
+	rd.compute_list_bind_uniform_set(compute_list, uniform_set, 0);
+	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
+	rd.compute_list_end();
+	rd.submit();
+	rd.sync();
+	
+	rd.free_rid(uniform_set);
+	
+	var butterfly_uniform_set = rd.uniform_set_create([params_uniform, butterflyUniform], butterfly_shader_rid, 0);
+	
+	var butterfly_pipeline = rd.compute_pipeline_create(butterfly_shader_rid);
+	
+	compute_list = rd.compute_list_begin();
+	rd.compute_list_bind_compute_pipeline(compute_list, butterfly_pipeline);
+	rd.compute_list_bind_uniform_set(compute_list, butterfly_uniform_set, 0);
+	print(log(resolution) / log(2));
+	rd.compute_list_dispatch(compute_list, (log(resolution) / log(2)), resolution / 8, 1);
+	rd.compute_list_end();
+	rd.submit();
+	rd.sync();
+	
+	rd.free_rid(butterfly_uniform_set);
+
+func generate_disp():
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
+	
+	var params: PackedByteArray = input.to_byte_array();
+	rd.buffer_update(params_buffer, 0, params.size(), params);
+	
 	disp_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, slopeUniform, imageUniform], disp_shader_rid, 0);
 	
 	disp_pipeline = rd.compute_pipeline_create(disp_shader_rid);
@@ -206,65 +232,21 @@ func generate_disp():
 	rd.submit();
 	rd.sync();
 	
-	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
-	var disp_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
-	var tex := ImageTexture.create_from_image(disp_image);
-	$TextureRect.texture = tex;
-	
-	var slope_output_bytes = rd.texture_get_data(slope_rid, 0);
-	var slope_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, slope_output_bytes);
-	var tex2 := ImageTexture.create_from_image(slope_image);
-	$TextureRect2.texture = tex2;
-	#FFT();
+	rd.free_rid(disp_uniform_set);
 	
 func FFT():
 	var ping = true; # ping means default values
-	var test = [0, 0, 0, 0];
-	var testParams := PackedFloat32Array(test).to_byte_array();
-	var testBuffer = rd.storage_buffer_create(test.size(), test);
-	var testUniform := RDUniform.new();
-	testUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER;
-	testUniform.binding = 15;
-	testUniform.add_id(testBuffer);
-		
-	var HeightMap = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
-		
-	var heightFormat = RDTextureFormat.new();
-	heightFormat.width = resolution;
-	heightFormat.height = resolution;
-	heightFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	heightFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
-		
-	var height_rid = rd.texture_create(heightFormat, RDTextureView.new(), [HeightMap.get_data()]);
-	var heightUniform = RDUniform.new();
-	heightUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
-	heightUniform.binding = 13;
-	heightUniform.add_id(height_rid);
-	
-	var SlopeImage = Image.create(resolution, resolution, false, Image.FORMAT_RGBAF);
-	
-	var slopeFormat = RDTextureFormat.new();
-	slopeFormat.width = resolution;
-	slopeFormat.height = resolution;
-	slopeFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
-	
-	var triangle_rid = rd.texture_create(slopeFormat, RDTextureView.new(), [SlopeImage.get_data()]);
-	
-	var slopeNormalUniform = RDUniform.new();
-	slopeNormalUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
-	slopeNormalUniform.binding = 14;
-	slopeNormalUniform.add_id(triangle_rid);
 	
 	var direction = 1.0;
+	
+	normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 	
 	for stage in (log(resolution) / log(2)):
 		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
-		normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], normal_shader_rid, 0);
-		normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
+		normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, slopeUniform, slopeNormalUniform, butterflyUniform], normal_shader_rid, 0);
 		
 		var compute_list := rd.compute_list_begin();
 		rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
@@ -293,8 +275,7 @@ func FFT():
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
-		normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], normal_shader_rid, 0);
-		normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
+		normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, butterflyUniform, slopeUniform, slopeNormalUniform], normal_shader_rid, 0);
 		
 		var compute_list := rd.compute_list_begin();
 		rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
@@ -319,7 +300,7 @@ func FFT():
 	var params: PackedByteArray = input.to_byte_array();
 	rd.buffer_update(params_buffer, 0, params.size(), params);
 		
-	normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, testUniform, butterflyUniform, slopeUniform, slopeNormalUniform], inversion_shader_rid, 0);
+	normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, butterflyUniform, slopeUniform, slopeNormalUniform], inversion_shader_rid, 0);
 	normal_pipeline = rd.compute_pipeline_create(inversion_shader_rid);
 		
 	var compute_list := rd.compute_list_begin();
@@ -330,16 +311,15 @@ func FFT():
 	rd.submit();
 	rd.sync();
 	
-	var normal_output_bytes = rd.texture_get_data(height_rid, 0);
 	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
 	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
 	var tex = ImageTexture.create_from_image(normal_image);
-	$TextureRect.texture = tex;
+	#$TextureRect.texture = tex;
 	
 	var slope_output_bytes = rd.texture_get_data(slope_rid, 0);
 	var slope_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, slope_output_bytes);
 	var tex2 := ImageTexture.create_from_image(slope_image);
-	$TextureRect2.texture = tex2;
+	#$TextureRect2.texture = tex2;
 	
 	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
 	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
@@ -385,7 +365,7 @@ func cleanup_gpu():
 	rd.free();
 	rd = null;
 
-func _process(delta):
+func _process(_delta):
 	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
 	if (currentParams != prevParams):
 		prevParams = currentParams;

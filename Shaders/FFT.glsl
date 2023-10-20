@@ -25,12 +25,6 @@ layout(set = 0, binding = 11, rgba32f) readonly uniform image2D displacement_ima
 layout(set = 0, binding = 12, rgba32f) readonly uniform image2D slope_image;
 layout(set = 0, binding = 13, rgba32f) writeonly uniform image2D heightmap_image;
 layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
-layout(set = 0, binding = 15) buffer TestOutput {
-    float x;
-    float y;
-    float idk;
-    float idk2;
-} test;
 layout(set = 0, binding = 16, rgba32f) readonly uniform image2D butterflyTex;
 
 vec2 MultiplyComplex(vec2 a, vec2 b) {

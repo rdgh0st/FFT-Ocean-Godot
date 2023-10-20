@@ -5,9 +5,9 @@
 [ext_resource type="Script" path="res://FFTWater_Test.gd" id="2_l2wr8"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
-size = Vector2(256, 256)
-subdivide_width = 256
-subdivide_depth = 256
+size = Vector2(512, 512)
+subdivide_width = 1024
+subdivide_depth = 1024
 
 [sub_resource type="Gradient" id="Gradient_eapve"]
 
@@ -22,9 +22,10 @@ noise = SubResource("FastNoiseLite_jpiv8")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5e6qt"]
 render_priority = 0
 shader = ExtResource("1_6gfy4")
-shader_parameter/height_scale = 0.2
-shader_parameter/oceanSize = 256.0
+shader_parameter/height_scale = 0.05
+shader_parameter/oceanSize = 1024.0
 shader_parameter/lambda = 0.05
+shader_parameter/lambdaClamp = 5.0
 shader_parameter/ambientLightColor = Color(0, 0.65, 0.75, 1)
 shader_parameter/ambientReflectance = 0.3
 shader_parameter/diffuseColor = Color(0.5, 0.65, 0.75, 1)
@@ -72,8 +73,8 @@ fetch = 300000.0
 windSpeed = 10.0
 enhancementFactor = 3.3
 inputfreq = 1.5
-resolution = 256.0
-oceanSize = 128.0
+resolution = 1024.0
+oceanSize = 512.0
 highCutoff = 10000.0
 depth = 1.5
 
@@ -97,4 +98,4 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(-4.37114e-08, 0.625243, -0.78043, 0, 0.780431, 0.625242, 1, 2.73302e-08, -3.41137e-08, -200, 100, 0)
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0, 10, 0)
