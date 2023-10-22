@@ -9,28 +9,18 @@ uniform float oceanSize;
 uniform float lambda;
 uniform float lambdaClamp;
 
-uniform vec3 ambientLightColor : source_color;
-uniform float ambientReflectance;
-uniform vec3 diffuseColor : source_color;
-uniform float diffuseFactor;
-uniform vec3 lightColor : source_color;
-uniform vec3 specColor : source_color;
+uniform vec4 AmbientColor : source_color;
+uniform float AmbientIntensity;
+uniform vec4 DiffuseColor : source_color;
+uniform float DiffuseIntensity;
+uniform vec4 LightColor : source_color;
+uniform vec4 SpecularColor : source_color;
 uniform vec3 specLightColor : source_color;
-uniform float specFactor;
+uniform float SpecularIntensity;
 uniform vec3 lightPos;
-uniform vec3 lightDir;
-uniform float shininess;
+uniform float Roughness;
+uniform float F0;
 uniform float exposure;
-
-uniform float numWaves = 1;
-
-uniform float ampMultiplier;
-uniform float freqMultiplier;
-uniform float speed;
-
-uniform float fresnelBias;
-uniform float fresnelScale;
-uniform float fresnelPower;
 uniform sampler2D panorama;
 
 float random (vec2 uv) {
@@ -53,6 +43,7 @@ void vertex() {
 	float dispX = min(texture(outputImage, world_pos.xz).z * lambda, lambdaClamp);
 	float dispZ = min(texture(outputImage, world_pos.xz).y * lambda, lambdaClamp);
 	VERTEX += vec3(dispX, height * height_scale, dispZ);
+	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / oceanSize;
 	vec3 center = texture(normalImage, world_pos.xz).xyz;
 	/*
 	vec3 right = vec3(1, 0, 0) * texture(normalImage, vec2(max(world_pos.x + 1.0, resolution - 1.0), world_pos.z)).xyz - center;
@@ -74,29 +65,54 @@ vec3 HDR(vec3 color) {
 }
 
 void fragment() {
-	vec3 P = VERTEX;
-	vec3 N = normalize(NORMAL);
-	vec3 ambient = ambientReflectance * ambientLightColor;
-	vec3 L = normalize(lightPos - P);
-	float diffuseLight = max(dot(N, L), 0.0);
-	vec3 diffuse = diffuseColor * lightColor * diffuseLight * diffuseFactor;
-	vec3 H = normalize(L + VIEW);
-	float facing = 0.0;
-	if (dot(N, L) > 0.0) {
-		facing = 1.0;
-	}
-	vec3 I = normalize(VERTEX - VIEW);
+	vec3 N = normalize(NORMAL.xyz);
+	vec3 V = normalize(CAMERA_POSITION_WORLD - world_pos.xyz);
+	vec3 L = normalize(lightPos);
+	vec3 H = normalize(L + V);
+    float VdotH = dot(V, H);
+    float NdotH = dot(N, H);
+    float LdotH = dot(L, H);
+    float NdotL = dot(N, L);
+    float NdotV = dot(N, V);
+
+	vec4 ambient = AmbientColor * AmbientIntensity;
+	vec4 diffuse = DiffuseIntensity * DiffuseColor * min(max(0, NdotL), 1);
+
+    if (NdotH <= 0.0 || NdotL <= 0.0) {
+        ALBEDO = (ambient + diffuse).rgb;
+    }
 	
-	float fresnel = fresnelBias + fresnelScale * pow(1.0 + dot(I, N), fresnelPower);
-	
-	vec3 specular = specColor * specLightColor * facing * pow(max(dot(N, H), 0.0), shininess) * fresnel;
-	
-	vec3 R = reflect(I, N);
-	
-	vec2 uv = uv_sphere(normalize(R));
-	vec4 reflectance = texture(panorama, uv);
-	
-	ALBEDO = ambient + diffuse + specular + (reflectance.rgb * fresnel);
+    // float3 specular intensity is the cook torrance formula, multiply it with specular color
+    float denom = 4.0 * NdotL * NdotV;
+
+    // GGXDistribution
+    float alphaSquare = pow(Roughness, 2);
+    float pi = 3.14159265358979323846;
+    float denomGGX = pi * pow((pow(NdotH, 2) * (alphaSquare - 1.0)) + 1.0, 2);
+    float GGXDistribution = alphaSquare / denomGGX;
+
+    // FresnelSchlick
+    float M = pow(min(0, max(1, 1.0 - VdotH)), 5);
+    float FresnelSchlick = F0 + (1.0 - F0) * M;
+
+    // Geometry
+    float K = pow((Roughness + 1.0), 2) / 8.0;
+    float denomG1L = (NdotL * (1.0 - K)) + K;
+    float G1L = NdotL / denomG1L;
+
+    float denomG1V = (NdotV * (1.0 - K)) + K;
+    float G1V = NdotV / denomG1V;
+
+    float Geometry = G1L * G1V;
+
+    // Apply Cook-Torrance Formula and find final Specular value
+    float numer = GGXDistribution * FresnelSchlick * Geometry;
+    float cookTorranceValue = numer / denom;
+    vec4 finalSpecular = cookTorranceValue * SpecularColor * SpecularIntensity * NdotL;
+
+    // integrate all color values into final return color
+    vec4 color = LightColor * clamp(NdotL, 0, 1) * ((diffuse) + finalSpecular) + ambient;
+    ALBEDO = color.rgb;
 	/*
 	vec3 N = normalize(NORMAL);
 	vec3 L = normalize(lightPos - world_pos);
