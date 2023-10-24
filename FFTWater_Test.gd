@@ -17,6 +17,13 @@ var currentFrame: float;
 @export var highCutoff: float;
 @export var depth: float;
 
+@export_group("Foam Parameters")
+@export var lambda: float;
+@export var foamDecay: float;
+@export var foamBias: float;
+@export var foamThreshold: float;
+@export var foamAdd: float;
+
 var imageUniform : RDUniform;
 var displacementUniform: RDUniform;
 var slopeUniform: RDUniform;
@@ -42,18 +49,24 @@ var slope_rid: RID;
 
 var params_buffer: RID;
 var params_uniform: RDUniform;
+var foam_params_buffer: RID;
+var foam_params_uniform: RDUniform;
 var heightUniform: RDUniform;
 var slopeNormalUniform: RDUniform;
+var foamUniform: RDUniform;
+var foam_rid: RID;
 
 var initTime: float;
 var deltaTime: float;
 
 var prevParams;
+var prevFoamParams;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initTime = Time.get_unix_time_from_system();
 	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
+	prevFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
 	init_gpu();
 
 func init_gpu():
@@ -89,6 +102,7 @@ func _notification(what):
 
 func generate_init_spectrum():
 	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
+	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
 	
 	var params: PackedByteArray = input.to_byte_array();
 	params_buffer = rd.storage_buffer_create(params.size(), params);
@@ -96,6 +110,13 @@ func generate_init_spectrum():
 	params_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER;
 	params_uniform.binding = 0;
 	params_uniform.add_id(params_buffer);
+	
+	var foamParams: PackedByteArray = foamInput.to_byte_array();
+	foam_params_buffer = rd.storage_buffer_create(foamParams.size(), foamParams);
+	foam_params_uniform = RDUniform.new();
+	foam_params_uniform.uniform_type = RenderingDevice.UNIFORM_TYPE_STORAGE_BUFFER;
+	foam_params_uniform.binding = 17;
+	foam_params_uniform.add_id(foam_params_buffer);
 	
 	var image = Image.create(resolution, resolution, false, Image.FORMAT_RGF);
 	
@@ -182,6 +203,20 @@ func generate_init_spectrum():
 	slopeNormalUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
 	slopeNormalUniform.binding = 14;
 	slopeNormalUniform.add_id(triangle_rid);
+	
+	var foamImage = Image.create(resolution, resolution, false, Image.FORMAT_RF);
+	
+	var foamFormat = RDTextureFormat.new();
+	foamFormat.height = resolution;
+	foamFormat.width = resolution;
+	foamFormat.format = RenderingDevice.DATA_FORMAT_R32_SFLOAT;
+	foamFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	
+	foam_rid = rd.texture_create(foamFormat, RDTextureView.new(), [foamImage.get_data()]);
+	foamUniform = RDUniform.new();
+	foamUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
+	foamUniform.binding = 16;
+	foamUniform.add_id(foam_rid);
 	
 	uniform_set = rd.uniform_set_create([params_uniform, imageUniform], shader_rid, 0);
 	
@@ -300,7 +335,7 @@ func FFT():
 	var params: PackedByteArray = input.to_byte_array();
 	rd.buffer_update(params_buffer, 0, params.size(), params);
 		
-	normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, butterflyUniform, slopeUniform, slopeNormalUniform], inversion_shader_rid, 0);
+	normal_uniform_set = rd.uniform_set_create([params_uniform, displacementUniform, heightUniform, butterflyUniform, slopeUniform, slopeNormalUniform, foam_params_uniform, foamUniform], inversion_shader_rid, 0);
 	normal_pipeline = rd.compute_pipeline_create(inversion_shader_rid);
 		
 	var compute_list := rd.compute_list_begin();
@@ -321,8 +356,13 @@ func FFT():
 	var tex2 := ImageTexture.create_from_image(slope_image);
 	#$TextureRect2.texture = tex2;
 	
+	var foam_output_bytes = rd.texture_get_data(foam_rid, 0);
+	var foam_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, foam_output_bytes);
+	var tex3 := ImageTexture.create_from_image(foam_image);
+	
 	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
 	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
+	get_surface_override_material(0).set_shader_parameter("foamImage", tex3);
 	
 
 func cleanup_gpu():
@@ -367,7 +407,9 @@ func cleanup_gpu():
 
 func _process(_delta):
 	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
-	if (currentParams != prevParams):
+	var currrentFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
+	if (currentParams != prevParams || currrentFoamParams != prevFoamParams):
+		prevFoamParams = currrentFoamParams;
 		prevParams = currentParams;
 		generate_init_spectrum();
 	

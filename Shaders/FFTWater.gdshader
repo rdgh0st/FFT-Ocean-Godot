@@ -3,7 +3,10 @@ render_mode unshaded;
 
 uniform sampler2D outputImage;
 uniform sampler2D normalImage;
+uniform sampler2D foamImage;
 varying vec3 world_pos;
+varying float jacobian;
+uniform float jacobianBias;
 uniform float height_scale = 0.15;
 uniform float oceanSize;
 uniform float resolution;
@@ -16,7 +19,7 @@ uniform vec4 DiffuseColor : source_color;
 uniform float DiffuseIntensity;
 uniform vec4 LightColor : source_color;
 uniform vec4 SpecularColor : source_color;
-uniform vec3 specLightColor : source_color;
+uniform vec4 foamColor : source_color;
 uniform float SpecularIntensity;
 uniform vec3 lightPos;
 uniform float Roughness;
@@ -40,17 +43,32 @@ vec2 uv_sphere(vec3 v)
 
 void vertex() {
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
+	/*
 	float height = texture(outputImage, world_pos.xz).x;
 	float dispX = min(texture(outputImage, world_pos.xz).z * lambda, lambdaClamp);
-	float dispZ = min(texture(outputImage, world_pos.xz).y * lambda, lambdaClamp);
+	float dispZ = min(texture(outputImage, world_pos.xz).a * lambda, lambdaClamp);
 	VERTEX += vec3(dispX, height * height_scale, dispZ);
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
 	
 	float texel = 1.0 / resolution;
 	float texelSize = oceanSize / resolution;
 	
-	vec3 slope = texture(normalImage, world_pos.xz).xyz;
-	NORMAL = cross(normalize(slope), vec3(0, 0, 1));
+	vec4 derivatives = texture(normalImage, world_pos.xz);
+	
+	jacobian = (1.0 + lambda * derivatives.b) * (1.0 + lambda * derivatives.a) - lambda * lambda * texture(outputImage, world_pos.xz).y * texture(outputImage, world_pos.xz).y;
+	jacobian = jacobian + jacobianBias;
+	
+	vec2 slope = vec2(derivatives.x / (1.0 + derivatives.z), (derivatives.y / (1.0 + derivatives.w)) * lambda);
+	
+	NORMAL = normalize(vec3(-slope.x, 1, -slope.y));
+	*/
+	
+	VERTEX += min(texture(outputImage, world_pos.xz).yxz, vec3(lambdaClamp, 5000, lambdaClamp));
+	VERTEX.y *= height_scale;
+	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
+	vec2 slope = texture(normalImage, world_pos.xz).xy;
+	NORMAL = normalize(vec3(-slope.x, 1, -slope.y));
+	
 }
 
 vec3 HDR(vec3 color) {
@@ -103,8 +121,10 @@ void fragment() {
     float cookTorranceValue = numer / denom;
     vec4 finalSpecular = cookTorranceValue * SpecularColor * SpecularIntensity * NdotL;
 
+	vec4 foam = foamColor * texture(foamImage, world_pos.xz).r;
+
     // integrate all color values into final return color
-    vec4 color = LightColor * clamp(NdotL, 0, 1) * ((diffuse) + finalSpecular) + ambient;
+    vec4 color = LightColor * clamp(NdotL, 0, 1) * ((diffuse) + finalSpecular) + ambient + foam;
     ALBEDO = color.rgb;
 	/*
 	vec3 N = normalize(NORMAL);

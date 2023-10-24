@@ -62,11 +62,11 @@ void main() {
     vec2 hY_dz = ihTilda * k.y;
     vec2 hZ_dz = -hTilda * k.y * k.y * kLengthRcp; 
 
-    vec2 hTildaDispX = vec2(hX.x - hZ.y, hX.y + hZ.x);
-    vec2 hTildaDispZ = vec2(hY.x - hZ_dx.y, hY.y + hZ_dx.x);
+    vec2 hTildaDispX = vec2(hX.x - hZ.y, hX.y + hZ.x); // Dy_Dxz
+    vec2 hTildaDispZ = vec2(hY.x - hZ_dx.y, hY.y + hZ_dx.x); // Dx_Dz
 
-    vec2 hTildaSlopeX = vec2(hY_dx.x - hY_dz.y, hY_dx.y + hY_dz.x);
-    vec2 hTildaSlopeZ = vec2(hX_dx.x - hZ_dz.y, hX_dx.y + hZ_dz.x);
+    vec2 hTildaSlopeX = vec2(hY_dx.x - hY_dz.y, hY_dx.y + hY_dz.x); // Dyx_Dyz
+    vec2 hTildaSlopeZ = vec2(hX_dx.x - hZ_dz.y, hX_dx.y + hZ_dz.x); // Dxx_Dzz
 
 /*
     if (k.x == 0.0 && k.y == 0.0) {
