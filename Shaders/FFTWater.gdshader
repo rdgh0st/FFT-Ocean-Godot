@@ -1,17 +1,20 @@
 shader_type spatial;
-render_mode unshaded;
+render_mode world_vertex_coords, depth_draw_always, cull_disabled;
 
 uniform sampler2D outputImage;
 uniform sampler2D normalImage;
 uniform sampler2D foamImage;
 varying vec3 world_pos;
 varying float jacobian;
+varying float foam_specular_factor;
+varying float foam_mix_factor;
 uniform float jacobianBias;
 uniform float height_scale = 0.15;
 uniform float oceanSize;
 uniform float resolution;
 uniform float lambda;
 uniform float lambdaClamp;
+uniform float foam_mix_strength;
 
 uniform vec4 AmbientColor : source_color;
 uniform float AmbientIntensity;
@@ -20,7 +23,9 @@ uniform float DiffuseIntensity;
 uniform vec4 LightColor : source_color;
 uniform vec4 SpecularColor : source_color;
 uniform vec4 foamColor : source_color;
+uniform vec4 sssColor : source_color;
 uniform float SpecularIntensity;
+uniform float SpecularPower;
 uniform vec3 lightPos;
 uniform float Roughness;
 uniform float F0;
@@ -66,9 +71,6 @@ void vertex() {
 	VERTEX += min(texture(outputImage, world_pos.xz).yxz, vec3(lambdaClamp, 5000, lambdaClamp));
 	VERTEX.y *= height_scale;
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
-	vec2 slope = texture(normalImage, world_pos.xz).xy;
-	NORMAL = normalize(vec3(-slope.x, 1, -slope.y));
-	
 }
 
 vec3 HDR(vec3 color) {
@@ -76,6 +78,9 @@ vec3 HDR(vec3 color) {
 }
 
 void fragment() {
+	vec2 slope = texture(normalImage, world_pos.xz).xy;
+	NORMAL = normalize(vec3(-slope.y, 1, -slope.x));
+	
 	vec3 N = normalize(NORMAL.xyz);
 	vec3 V = normalize(CAMERA_POSITION_WORLD - world_pos.xyz);
 	vec3 L = normalize(lightPos);
@@ -124,19 +129,30 @@ void fragment() {
 	vec4 foam = foamColor * texture(foamImage, world_pos.xz).r;
 
     // integrate all color values into final return color
-    vec4 color = LightColor * clamp(NdotL, 0, 1) * ((diffuse) + finalSpecular) + ambient + foam;
-    ALBEDO = color.rgb;
-	/*
-	vec3 N = normalize(NORMAL);
-	vec3 L = normalize(lightPos - world_pos);
-	vec3 H = L + normalize(-VIEW.xyz);
-	float fog = min(world_pos.z / 500.0, 1.0);
 	
-	float D = dot(N, L);
-	bool facing = D > 0.0;
+	foam_mix_factor = clamp((texture(foamImage, world_pos.xz).r), 0.0, 1.0);
+	foam_mix_factor = (foam_mix_factor * foam_mix_factor) * foam_mix_strength;
+	ALBEDO = mix(AmbientColor, foamColor, foam_mix_factor).rgb;
+	foam_specular_factor = (1.0 - foam_mix_factor);
 	
-	vec3 color = ambientLightColor * ambientReflectance + diffuseColor * diffuseFactor * max(D, 0.0) + (facing ? specColor * specFactor * max(pow(dot(N, H), shininess), 0.0) : vec3(0.0, 0.0, 0.0));
-	color *= (1.0 - fog) + vec3(0.25, 0.75, 0.65) * fog;
-	ALBEDO = color;
-	*/
+	ROUGHNESS = foam_mix_factor * 0.02;
+	METALLIC = DiffuseIntensity * foam_specular_factor;
+	SPECULAR = SpecularIntensity * foam_specular_factor;
+	
+    //vec4 color = ambient + foam;
+    //ALBEDO = color.rgb;
+	
+	
+	
+}
+
+void light() {
+	vec3 H = normalize(LIGHT + VIEW);
+	float spec = clamp(pow(dot(NORMAL, H), SpecularPower), 0.0, 1.0) * SpecularIntensity;
+	SPECULAR_LIGHT += (LIGHT_COLOR * ALBEDO * ATTENUATION / PI) * clamp(dot(NORMAL, H), 0.0, 1.0) * foam_specular_factor;
+	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * spec * foam_specular_factor;
+	
+	// Foam Lighting
+	DIFFUSE_LIGHT += DiffuseIntensity * foam_mix_factor * foamColor.rgb * ATTENUATION;
+	
 }
