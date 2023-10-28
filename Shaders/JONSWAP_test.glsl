@@ -43,6 +43,11 @@ vec2 UniformToGaussian(float u1, float u2) {
     return vec2(R * cos(theta), R * sin(theta));
 }
 
+float Frequency(float k)
+{
+	return sqrt(g * k * tanh(min(k * params.depth, 20)));
+}
+
 float JONSWAP(float freq) {
     float peak = 22.0f * pow(((params.windSpeed * params.fetch) / (g * g)), -(1.0f / 3.0f));
 
@@ -64,10 +69,15 @@ void main() {
 
     if (params.lowCutoff <= kLength && kLength <= params.highCutoff) {
         float coeff = 1.0f / sqrt(2);
-        float dispersionK = sqrt(g * kLength * tanh(min(kLength * params.depth, 20)));
-        float JSroot = sqrt(JONSWAP(dispersionK));
+        float omega = Frequency(kLength);
+        float th = tanh(min(kLength * params.depth, 20));
+	    float ch = cosh(kLength * params.depth);
+	    float dOmegak = g * (params.depth * kLength / ch / ch + th) / Frequency(kLength) / 2.0;
+        float jonswap = JONSWAP(omega);
+
+
         vec2 gauss = UniformToGaussian(nrand(normalize(k)), nrand(normalize(pixel_coord) + 0.0001));
-        vec2 res = coeff * vec2(gauss.x, gauss.y) * JSroot;
+        vec2 res = gauss * sqrt(2.0 * jonswap * abs(dOmegak) / kLength * deltaK * deltaK);
         if (isinf(res.x) || isnan(res.x) || isinf(res.y) || isnan(res.y)) {
             res = vec2(0.0);
         }

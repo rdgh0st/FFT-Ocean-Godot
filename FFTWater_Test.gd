@@ -252,7 +252,7 @@ func generate_init_spectrum():
 	var disp_output_bytes = rd.texture_get_data(image_rid, 0);
 	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGF, disp_output_bytes);
 	var tex = ImageTexture.create_from_image(normal_image);
-	$TextureRect.texture = tex;
+	#$TextureRect.texture = tex;
 
 func generate_disp():
 	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
@@ -366,12 +366,12 @@ func FFT():
 	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
 	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
 	var tex = ImageTexture.create_from_image(normal_image);
-	#$TextureRect.texture = tex;
+	$TextureRect.texture = tex;
 	
 	var slope_output_bytes = rd.texture_get_data(slope_rid, 0);
 	var slope_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, slope_output_bytes);
 	var tex2 := ImageTexture.create_from_image(slope_image);
-	#$TextureRect2.texture = tex2;
+	$TextureRect2.texture = tex2;
 	
 	var foam_output_bytes = rd.texture_get_data(foam_rid, 0);
 	var foam_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, foam_output_bytes);
