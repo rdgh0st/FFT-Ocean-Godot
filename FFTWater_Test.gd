@@ -38,6 +38,7 @@ var disp_shader_rid: RID;
 var disp_uniform_set: RID;
 var disp_pipeline: RID;
 var displacement_rid: RID;
+var height_rid: RID;
 
 var normal_shader_rid: RID;
 var normal_uniform_set: RID;
@@ -183,7 +184,7 @@ func generate_init_spectrum():
 	heightFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
 	heightFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 		
-	var height_rid = rd.texture_create(heightFormat, RDTextureView.new(), [HeightMap.get_data()]);
+	height_rid = rd.texture_create(heightFormat, RDTextureView.new(), [HeightMap.get_data()]);
 	heightUniform = RDUniform.new();
 	heightUniform.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE;
 	heightUniform.binding = 13;
@@ -241,13 +242,17 @@ func generate_init_spectrum():
 	compute_list = rd.compute_list_begin();
 	rd.compute_list_bind_compute_pipeline(compute_list, butterfly_pipeline);
 	rd.compute_list_bind_uniform_set(compute_list, butterfly_uniform_set, 0);
-	print(log(resolution) / log(2));
 	rd.compute_list_dispatch(compute_list, (log(resolution) / log(2)), resolution / 8, 1);
 	rd.compute_list_end();
 	rd.submit();
 	rd.sync();
 	
 	rd.free_rid(butterfly_uniform_set);
+	
+	var disp_output_bytes = rd.texture_get_data(image_rid, 0);
+	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGF, disp_output_bytes);
+	var tex = ImageTexture.create_from_image(normal_image);
+	$TextureRect.texture = tex;
 
 func generate_disp():
 	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
@@ -269,6 +274,11 @@ func generate_disp():
 	
 	rd.free_rid(disp_uniform_set);
 	
+	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
+	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
+	var tex = ImageTexture.create_from_image(normal_image);
+	#$TextureRect.texture = tex;
+	
 func FFT():
 	var ping = true; # ping means default values
 	
@@ -276,7 +286,9 @@ func FFT():
 	
 	normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 	
-	for stage in (log(resolution) / log(2)):
+	var stage = 0;
+	
+	while stage < (log(resolution) / log(2)):
 		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
@@ -286,7 +298,7 @@ func FFT():
 		var compute_list := rd.compute_list_begin();
 		rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
 		rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
-		rd.compute_list_dispatch(compute_list, resolution / 32, resolution / 32, 1);
+		rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 		rd.compute_list_end();
 		rd.submit();
 		#await get_tree().create_timer(3).timeout
@@ -302,10 +314,13 @@ func FFT():
 		slopeUniform.binding = slopeNormalUniform.binding;
 		slopeNormalUniform.binding = temp2;
 		ping = !ping;
+		stage += 1;
 	
 	direction = 0.0;
+	stage = 0;
 	
-	for stage in (log(resolution) / log(2)):
+	# need to go from 0 to logSize - 1 inc
+	while stage < (log(resolution) / log(2)):
 		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
@@ -315,7 +330,7 @@ func FFT():
 		var compute_list := rd.compute_list_begin();
 		rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
 		rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
-		rd.compute_list_dispatch(compute_list, resolution / 32, resolution / 32, 1);
+		rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 		rd.compute_list_end();
 		rd.submit();
 		rd.sync();
@@ -330,6 +345,7 @@ func FFT():
 		slopeUniform.binding = slopeNormalUniform.binding;
 		slopeNormalUniform.binding = temp2;
 		ping = !ping;
+		stage += 1;
 	
 	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
 	var params: PackedByteArray = input.to_byte_array();
@@ -341,10 +357,11 @@ func FFT():
 	var compute_list := rd.compute_list_begin();
 	rd.compute_list_bind_compute_pipeline(compute_list, normal_pipeline);
 	rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
-	rd.compute_list_dispatch(compute_list, resolution / 16, resolution / 16, 1);
+	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 	rd.compute_list_end();
 	rd.submit();
 	rd.sync();
+	
 	
 	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
 	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);

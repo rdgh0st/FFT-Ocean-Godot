@@ -32,6 +32,7 @@ void main() {
     ivec2 pixel_coord = ivec2(gl_GlobalInvocationID.xy);
     vec2 h0 = vec2(imageLoad(spectrum_image, pixel_coord).rg);
     vec2 h0star = vec2(imageLoad(spectrum_image, (int(params.resolution) - pixel_coord) % (int (params.resolution) - 1)).rg);
+    h0star = imageLoad(spectrum_image, ivec2((int(params.resolution) - pixel_coord.x) % int(params.resolution), (int(params.resolution) - pixel_coord.y) % int(params.resolution))).rg;
     h0star.y *= -1.0;
 
     float halfN = params.resolution / 2.0f;
@@ -62,8 +63,8 @@ void main() {
     vec2 hY_dz = ihTilda * k.y;
     vec2 hZ_dz = -hTilda * k.y * k.y * kLengthRcp; 
 
-    vec2 hTildaDispX = vec2(hX.x - hZ.y, hX.y + hZ.x); // Dy_Dxz
-    vec2 hTildaDispZ = vec2(hY.x - hZ_dx.y, hY.y + hZ_dx.x); // Dx_Dz
+    vec2 hTildaDispX = vec2(hX.x - hZ.y, hX.y + hZ.x); // Dx_Dz
+    vec2 hTildaDispZ = vec2(hY.x - hZ_dx.y, hY.y + hZ_dx.x); // Dy_dxz
 
     vec2 hTildaSlopeX = vec2(hY_dx.x - hY_dz.y, hY_dx.y + hY_dz.x); // Dyx_Dyz
     vec2 hTildaSlopeZ = vec2(hX_dx.x - hZ_dz.y, hX_dx.y + hZ_dz.x); // Dxx_Dzz

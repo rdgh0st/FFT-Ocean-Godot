@@ -1,7 +1,7 @@
 #[compute]
 #version 460 core
 
-layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(set = 0, binding = 0) buffer SpectrumParameters {
     float fetch;
@@ -34,15 +34,14 @@ layout(set = 0, binding = 16, r32f) uniform image2D foam_image;
 void main() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
     float perm = 1.0 - 2.0 * ((x.x + x.y) % 2);
-    vec4 h = imageLoad(heightmap_image, x);
-    vec4 t = imageLoad(triangle_image, x);
+    vec4 h = imageLoad(heightmap_image, x) * perm;
+    vec4 t = imageLoad(triangle_image, x) * perm;
+    vec2 dxdz = h.xy;
+    vec2 dydxz = h.zw;
+    vec2 dyzdyz = t.xy;
+    vec2 dxxdzz = t.zw;
 
-    vec2 dxdz = vec2(perm * (h.x), perm * (h.y));
-    vec2 dydxz = vec2(perm * (h.z), perm * (h.a));
-    vec2 dyzdyz = vec2(perm * (t.x), perm * (t.y));
-    vec2 dxxdzz = vec2(perm * (t.z), perm * (t.a));
-
-    float jacobian = (1.0f + foamParams.lambda * dxxdzz.x) * (1.0f + foamParams.lambda * dxxdzz.y) - foamParams.lambda * foamParams.lambda * dxdz.y * dxdz.y;
+    float jacobian = (1.0f + foamParams.lambda * dxxdzz.x) * (1.0f + foamParams.lambda * dxxdzz.y) - foamParams.lambda * foamParams.lambda * dydxz.y * dydxz.y;
 
     vec3 displacement = vec3(foamParams.lambda * dxdz.x, dydxz.x, foamParams.lambda * dxdz.y);
     vec2 slopes = dyzdyz.xy / (1 + abs(dxxdzz * foamParams.lambda));
@@ -62,6 +61,6 @@ void main() {
 
     imageStore(displacement_image, x, vec4(displacement, foam));
 
-    imageStore(slope_image, x, vec4(slopes, perm * (t.z), perm * (t.a)));
+    imageStore(slope_image, x, vec4(slopes, dxxdzz));
 
 }

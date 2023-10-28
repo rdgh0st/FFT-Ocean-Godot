@@ -44,7 +44,7 @@ vec2 UniformToGaussian(float u1, float u2) {
 }
 
 float JONSWAP(float freq) {
-    float peak = 22.0f * pow(((g * g) / (params.windSpeed * params.fetch)), (1.0f / 3.0f));
+    float peak = 22.0f * pow(((params.windSpeed * params.fetch) / (g * g)), -(1.0f / 3.0f));
 
     float sigma = (freq <= peak) ? 0.07f : 0.09f;
 
@@ -76,4 +76,5 @@ void main() {
     } else {
         imageStore(spectrum_image, pixel_coord, vec4(0.0));
     }
+    
 }

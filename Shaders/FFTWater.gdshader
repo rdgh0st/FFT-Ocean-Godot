@@ -48,6 +48,7 @@ vec2 uv_sphere(vec3 v)
 
 void vertex() {
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
+	
 	/*
 	float height = texture(outputImage, world_pos.xz).x;
 	float dispX = min(texture(outputImage, world_pos.xz).z * lambda, lambdaClamp);
@@ -68,8 +69,8 @@ void vertex() {
 	NORMAL = normalize(vec3(-slope.x, 1, -slope.y));
 	*/
 	
-	VERTEX += min(texture(outputImage, world_pos.xz).yxz, vec3(lambdaClamp, 5000, lambdaClamp));
-	VERTEX.y *= height_scale;
+	VERTEX += texture(outputImage, world_pos.xz).xyz;
+	VERTEX.y = min(VERTEX.y * height_scale, 5000);
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
 }
 

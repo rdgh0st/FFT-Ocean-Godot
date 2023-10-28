@@ -37,6 +37,7 @@ vec2 ComplexExp(vec2 a) {
 void main() {
     vec2 pixel_coord = gl_GlobalInvocationID.xy;
     float k = mod(((pixel_coord.y * params.resolution) / pow(2.0, pixel_coord.x + 1)), params.resolution);
+    vec2 mult = vec2(2.0 * PI * k / params.resolution);
     vec2 twiddle = vec2(cos(2.0 * PI * k / params.resolution), sin(2.0 * PI * k / params.resolution));
     float span = pow(2.0, pixel_coord.x);
     bool top = false;
@@ -61,9 +62,10 @@ void main() {
     ivec2 id = ivec2(gl_GlobalInvocationID.xy);
     int b = int(params.resolution) >> (id.x + 1);
     vec2 mult = 2.0 * PI * vec2(0.0, 1.0) / params.resolution;
-    int i = (b * (id.y / b) + id.y % b) % int(params.resolution);
+    int i = (2 * b * (id.y / b) + id.y % b) % int(params.resolution);
     vec2 twiddle = ComplexExp(-mult * ((id.y / b) * b));
     imageStore(butterflyTex, id, vec4(twiddle, i, i + b));
     imageStore(butterflyTex, ivec2(id.x, id.y + params.resolution / 2), vec4(-twiddle, i, i + b));
     */
+    
 }

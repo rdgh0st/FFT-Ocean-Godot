@@ -1,7 +1,7 @@
 #[compute]
 #version 460 core
 
-layout(local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 const float PI = 3.14159265359;
 
@@ -28,57 +28,86 @@ layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
 layout(set = 0, binding = 16, rgba32f) readonly uniform image2D butterflyTex;
 
 vec2 MultiplyComplex(vec2 a, vec2 b) {
-    return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    //return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+    return vec2(a.r * b.r - a.g * b.g, a.r * b.g + a.g * b.r);
 }
 
 vec2 AddComplex(vec2 a, vec2 b) {
     return a + b;
 }
 
+// PROBLEM: Perfectly storing x and z, but y is in a weird line across the middle
+
 void horizontalFFT() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
 
-    vec4 butterflyData = imageLoad(butterflyTex, ivec2(params.stage, x.x)).rgba;
-    vec2 p = imageLoad(displacement_image, ivec2(butterflyData.z, x.y)).rg;
-    vec2 q = imageLoad(displacement_image, ivec2(butterflyData.w, x.y)).rg;
-    vec2 twiddle = vec2(butterflyData.x, butterflyData.y);
+    vec4 butterflyData = imageLoad(butterflyTex, ivec2(params.stage, x.x)).xyzw;
+    vec2 p = imageLoad(displacement_image, ivec2(butterflyData.z, x.y)).xy;
+    vec2 q = imageLoad(displacement_image, ivec2(butterflyData.w, x.y)).xy;
+    vec2 twiddle = vec2(butterflyData.x, -butterflyData.y);
 
     vec2 h = AddComplex(p, MultiplyComplex(twiddle, q));
 
-    vec2 p2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).ba;
-    vec2 q2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).ba;
+    vec2 p2 = imageLoad(displacement_image, ivec2(butterflyData.z, x.y)).zw;
+    vec2 q2 = imageLoad(displacement_image, ivec2(butterflyData.w, x.y)).zw;
 
     vec2 h2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
 
     imageStore(heightmap_image, x, vec4(h, h2));
 
-    p = imageLoad(slope_image, ivec2(butterflyData.z, x.y)).rg;
-    q = imageLoad(slope_image, ivec2(butterflyData.w, x.y)).rg;
+    p = imageLoad(slope_image, ivec2(butterflyData.z, x.y)).xy;
+    q = imageLoad(slope_image, ivec2(butterflyData.w, x.y)).xy;
     vec2 s = AddComplex(p, MultiplyComplex(twiddle, q));
-    imageStore(triangle_image, x, vec4(s, 0, 1));
+
+    p2 = imageLoad(slope_image, ivec2(butterflyData.z, x.y)).zw;
+    q2 = imageLoad(slope_image, ivec2(butterflyData.w, x.y)).zw;
+    vec2 s2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
+
+    imageStore(triangle_image, x, vec4(s, s2));
+    /*
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    vec4 data = imageLoad(butterflyTex, ivec2(params.stage, id.x));
+    ivec2 indices = ivec2(data.ba);
+    vec2 first = imageLoad(displacement_image, ivec2(indices.x, id.y)).rg;
+    vec2 second = imageLoad(displacement_image, ivec2(indices.y, id.y)).rg;
+    imageStore(heightmap_image, id, vec4(first + MultiplyComplex(vec2(data.r, -data.g), second), 0, 1));
+    */
 }
 
 void verticalFFT() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
 
-    vec4 butterflyData = imageLoad(butterflyTex, ivec2(params.stage, x.y)).rgba;
-    vec2 p = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).rg;
-    vec2 q = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).rg;
-    vec2 twiddle = vec2(butterflyData.x, butterflyData.y);
+    vec4 butterflyData = imageLoad(butterflyTex, ivec2(params.stage, x.y)).xyzw;
+    vec2 p = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).xy;
+    vec2 q = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).xy;
+    vec2 twiddle = vec2(butterflyData.x, -butterflyData.y);
 
     vec2 h = AddComplex(p, MultiplyComplex(twiddle, q));
 
-    vec2 p2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).ba;
-    vec2 q2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).ba;
+    vec2 p2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.z)).zw;
+    vec2 q2 = imageLoad(displacement_image, ivec2(x.x, butterflyData.w)).zw;
 
     vec2 h2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
 
     imageStore(heightmap_image, x, vec4(h, h2));
 
-    p = imageLoad(slope_image, ivec2(x.x, butterflyData.z)).rg;
-    q = imageLoad(slope_image, ivec2(x.x, butterflyData.w)).rg;
+    p = imageLoad(slope_image, ivec2(x.x, butterflyData.z)).xy;
+    q = imageLoad(slope_image, ivec2(x.x, butterflyData.w)).xy;
     vec2 s = AddComplex(p, MultiplyComplex(twiddle, q));
-    imageStore(triangle_image, x, vec4(s, 0, 1));
+
+    p2 = imageLoad(slope_image, ivec2(x.x, butterflyData.z)).zw;
+    q2 = imageLoad(slope_image, ivec2(x.x, butterflyData.w)).zw;
+    vec2 s2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
+
+    imageStore(triangle_image, x, vec4(s, s2));
+    /*
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+    vec4 data = imageLoad(butterflyTex, ivec2(params.stage, id.y));
+    ivec2 indices = ivec2(data.ba);
+    vec2 first = imageLoad(displacement_image, ivec2(id.x, indices.x)).rg;
+    vec2 second = imageLoad(displacement_image, ivec2(id.x, indices.y)).rg;
+    imageStore(heightmap_image, id, vec4(first + MultiplyComplex(vec2(data.r, -data.g), second), 0, 1));
+    */
 }
 
 void main() {
