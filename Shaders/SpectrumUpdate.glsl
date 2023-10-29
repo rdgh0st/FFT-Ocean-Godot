@@ -69,13 +69,6 @@ void main() {
     vec2 hTildaSlopeX = vec2(hY_dx.x - hY_dz.y, hY_dx.y + hY_dz.x); // Dyx_Dyz
     vec2 hTildaSlopeZ = vec2(hX_dx.x - hZ_dz.y, hX_dx.y + hZ_dz.x); // Dxx_Dzz
 
-/*
-    if (k.x == 0.0 && k.y == 0.0) {
-        hTilda = vec2(0.0);
-        hX = vec2(0.0);
-    }
-    */
-
     imageStore(displacement_image, pixel_coord, vec4(hTildaDispX, hTildaDispZ));
     imageStore(slope_image, pixel_coord, vec4(hTildaSlopeX, hTildaSlopeZ));
 }

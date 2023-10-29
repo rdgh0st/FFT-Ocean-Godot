@@ -43,9 +43,20 @@ vec2 UniformToGaussian(float u1, float u2) {
     return vec2(R * cos(theta), R * sin(theta));
 }
 
-float Frequency(float k)
+float DirectionSpectrum(float freq, float theta) {
+    float p = 0.5 + 0.82 * exp(-0.5 * pow((freq * params.windSpeed) / g, 4));
+    float q = 0.32 * exp(-0.5 * pow((freq * params.windSpeed) / g, 4));
+    return (1.0 / PI) * (1.0 + p * cos(2.0 * theta) + q * cos(4.0 * theta));
+}
+
+float TMACorrection(float omega)
 {
-	return sqrt(g * k * tanh(min(k * params.depth, 20)));
+	float omegaH = omega * sqrt(params.depth / g);
+	if (omegaH <= 1)
+		return 0.5 * omegaH * omegaH;
+	if (omegaH < 2)
+		return 1.0 - 0.5 * (2.0 - omegaH) * (2.0 - omegaH);
+	return 1;
 }
 
 float JONSWAP(float freq) {
@@ -57,7 +68,7 @@ float JONSWAP(float freq) {
 
     float r = exp(-square(freq - peak) / (2.0f * square(sigma) * square(peak)));
 
-    return ((alpha * square(g)) / pow(freq, 5.0f)) * exp(-1.25 * pow((peak / freq), 4.0f)) * pow(params.enhancementFactor, r);
+    return TMACorrection(freq) * ((alpha * square(g)) / pow(freq, 5.0f)) * exp(-1.25 * pow((peak / freq), 4.0f)) * pow(params.enhancementFactor, r);
 }
 
 void main() {
@@ -68,13 +79,14 @@ void main() {
     float kLength = length(k) + params.transformHorizontal;
 
     if (params.lowCutoff <= kLength && kLength <= params.highCutoff) {
+        float kAngle = atan(k.x, k.y);
         float coeff = 1.0f / sqrt(2);
-        float omega = Frequency(kLength);
+        float omega = sqrt(g * kLength * tanh(min(kLength * params.depth, 20)));
         float th = tanh(min(kLength * params.depth, 20));
 	    float ch = cosh(kLength * params.depth);
-	    float dOmegak = g * (params.depth * kLength / ch / ch + th) / Frequency(kLength) / 2.0;
-        float jonswap = JONSWAP(omega);
-
+	    float dOmegak = g * (params.depth * kLength / ch / ch + th) / omega / 2.0;
+        float jonswap = JONSWAP(omega) * DirectionSpectrum(omega, kAngle);
+        // multiply with DirectionSpectrum and ShortWavesFade
 
         vec2 gauss = UniformToGaussian(nrand(normalize(k)), nrand(normalize(pixel_coord) + 0.0001));
         vec2 res = gauss * sqrt(2.0 * jonswap * abs(dOmegak) / kLength * deltaK * deltaK);

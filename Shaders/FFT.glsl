@@ -28,7 +28,6 @@ layout(set = 0, binding = 14, rgba32f) writeonly uniform image2D triangle_image;
 layout(set = 0, binding = 16, rgba32f) readonly uniform image2D butterflyTex;
 
 vec2 MultiplyComplex(vec2 a, vec2 b) {
-    //return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
     return vec2(a.r * b.r - a.g * b.g, a.r * b.g + a.g * b.r);
 }
 
@@ -64,14 +63,6 @@ void horizontalFFT() {
     vec2 s2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
 
     imageStore(triangle_image, x, vec4(s, s2));
-    /*
-    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-    vec4 data = imageLoad(butterflyTex, ivec2(params.stage, id.x));
-    ivec2 indices = ivec2(data.ba);
-    vec2 first = imageLoad(displacement_image, ivec2(indices.x, id.y)).rg;
-    vec2 second = imageLoad(displacement_image, ivec2(indices.y, id.y)).rg;
-    imageStore(heightmap_image, id, vec4(first + MultiplyComplex(vec2(data.r, -data.g), second), 0, 1));
-    */
 }
 
 void verticalFFT() {
@@ -100,14 +91,6 @@ void verticalFFT() {
     vec2 s2 = AddComplex(p2, MultiplyComplex(twiddle, q2));
 
     imageStore(triangle_image, x, vec4(s, s2));
-    /*
-    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-    vec4 data = imageLoad(butterflyTex, ivec2(params.stage, id.y));
-    ivec2 indices = ivec2(data.ba);
-    vec2 first = imageLoad(displacement_image, ivec2(id.x, indices.x)).rg;
-    vec2 second = imageLoad(displacement_image, ivec2(id.x, indices.y)).rg;
-    imageStore(heightmap_image, id, vec4(first + MultiplyComplex(vec2(data.r, -data.g), second), 0, 1));
-    */
 }
 
 void main() {
