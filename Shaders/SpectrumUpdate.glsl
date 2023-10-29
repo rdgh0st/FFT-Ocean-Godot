@@ -22,6 +22,9 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float lowCutoff;
     float highCutoff;
     float depth;
+    float stage; // i in iteration above
+    float direction; // vertical or horizontal
+    float swell;
 } params;
 
 vec2 MultiplyComplex(vec2 a, vec2 b) {

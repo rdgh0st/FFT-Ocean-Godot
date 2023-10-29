@@ -20,6 +20,9 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float lowCutoff;
     float highCutoff;
     float depth;
+    float stage; // i in iteration above
+    float direction; // vertical or horizontal
+    float swell;
 } params;
 
 float square(float x) {
@@ -43,10 +46,27 @@ vec2 UniformToGaussian(float u1, float u2) {
     return vec2(R * cos(theta), R * sin(theta));
 }
 
+float NormalizationFactor(float s) {
+    float s2 = s * s;
+    float s3 = s2 * s;
+    float s4 = s3 * s;
+    if (s < 5) return -0.000564f * s4 + 0.00776f * s3 - 0.044f * s2 + 0.192f * s + 0.163f;
+    else return -4.80e-08f * s4 + 1.07e-05f * s3 - 9.53e-04f * s2 + 5.90e-02f * s + 3.93e-01f;
+}
+
+float Hasselmann(float freq) {
+    float peak = 22.0f * pow(((params.windSpeed * params.fetch) / (g * g)), -(1.0f / 3.0f));
+    if (freq <= peak) {
+        return 6.97 * pow(freq / peak, 4.06);
+    } else {
+        return 9.77 * pow(freq / peak, -2.33 - 1.45 * ((params.fetch * peak / g) - 1.17));
+    }
+}
+
 float DirectionSpectrum(float freq, float theta) {
-    float p = 0.5 + 0.82 * exp(-0.5 * pow((freq * params.windSpeed) / g, 4));
-    float q = 0.32 * exp(-0.5 * pow((freq * params.windSpeed) / g, 4));
-    return (1.0 / PI) * (1.0 + p * cos(2.0 * theta) + q * cos(4.0 * theta));
+    float peak = 22.0f * pow(((params.windSpeed * params.fetch) / (g * g)), -(1.0f / 3.0f));
+    float xi = Hasselmann(freq) + 16 * tanh(peak / freq) * params.swell * params.swell;
+    return NormalizationFactor(xi) * pow(cos(theta / 2.0), 2.0 * xi);
 }
 
 float TMACorrection(float omega)

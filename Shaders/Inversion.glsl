@@ -15,6 +15,9 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float lowCutoff;
     float highCutoff;
     float depth;
+    float stage; // i in iteration above
+    float direction; // vertical or horizontal
+    float swell;
 } params;
 
 layout(set = 0, binding = 17) buffer FoamParamters {
@@ -23,6 +26,7 @@ layout(set = 0, binding = 17) buffer FoamParamters {
     float foamBias;
     float foamThreshold;
     float foamAdd;
+    float lowerAdjustment;
 } foamParams;
 
 layout(set = 0, binding = 11, rgba32f) writeonly uniform image2D displacement_image;
@@ -55,6 +59,10 @@ void main() {
 
     if (finalJacobian > foamParams.foamThreshold) {
         foam += foamParams.foamAdd * finalJacobian;
+    }
+
+    if (x.y > params.resolution / 2.0) {
+        foam *= exp(foamParams.lowerAdjustment);
     }
 
     imageStore(foam_image, x, vec4(foam, 0, 0, 1));

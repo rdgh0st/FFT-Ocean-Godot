@@ -16,6 +16,7 @@ var currentFrame: float;
 @export var lowCutoff: float;
 @export var highCutoff: float;
 @export var depth: float;
+@export var swell: float;
 
 @export_group("Foam Parameters")
 @export var lambda: float;
@@ -23,6 +24,7 @@ var currentFrame: float;
 @export var foamBias: float;
 @export var foamThreshold: float;
 @export var foamAdd: float;
+@export var lowerAdjustment: float;
 
 var imageUniform : RDUniform;
 var displacementUniform: RDUniform;
@@ -66,8 +68,8 @@ var prevFoamParams;
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initTime = Time.get_unix_time_from_system();
-	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
-	prevFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
+	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	prevFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	init_gpu();
 
 func init_gpu():
@@ -102,8 +104,8 @@ func _notification(what):
 		cleanup_gpu();
 
 func generate_init_spectrum():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
-	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	
 	var params: PackedByteArray = input.to_byte_array();
 	params_buffer = rd.storage_buffer_create(params.size(), params);
@@ -255,7 +257,7 @@ func generate_init_spectrum():
 	#$TextureRect.texture = tex;
 
 func generate_disp():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
 	
 	var params: PackedByteArray = input.to_byte_array();
 	rd.buffer_update(params_buffer, 0, params.size(), params);
@@ -289,7 +291,7 @@ func FFT():
 	var stage = 0;
 	
 	while stage < (log(resolution) / log(2)):
-		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction];
+		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
@@ -321,7 +323,7 @@ func FFT():
 	
 	# need to go from 0 to logSize - 1 inc
 	while stage < (log(resolution) / log(2)):
-		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction];
+		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
@@ -424,8 +426,8 @@ func cleanup_gpu():
 	rd = null;
 
 func _process(_delta):
-	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth];
-	var currrentFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd];
+	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	var currrentFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	if (currentParams != prevParams || currrentFoamParams != prevFoamParams):
 		prevFoamParams = currrentFoamParams;
 		prevParams = currentParams;

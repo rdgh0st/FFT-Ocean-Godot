@@ -19,6 +19,7 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float depth;
     float stage; // i in iteration above
     float direction; // vertical or horizontal
+    float swell;
 } params;
 
 layout(set = 0, binding = 11, rgba32f) readonly uniform image2D displacement_image;
