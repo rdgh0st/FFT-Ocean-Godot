@@ -132,7 +132,7 @@ void fragment() {
     // integrate all color values into final return color
 	
 	foam_mix_factor = clamp((texture(foamImage, world_pos.xz).r), 0.0, 1.0);
-	//foam_mix_factor = (foam_mix_factor * foam_mix_factor) * foam_mix_strength;
+	foam_mix_factor = (foam_mix_factor * foam_mix_factor) * foam_mix_strength;
 	ALBEDO = mix(AmbientColor, foamColor, foam_mix_factor).rgb;
 	foam_specular_factor = (1.0 - foam_mix_factor);
 	

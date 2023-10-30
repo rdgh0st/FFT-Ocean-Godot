@@ -36,8 +36,6 @@ vec2 AddComplex(vec2 a, vec2 b) {
     return a + b;
 }
 
-// PROBLEM: Perfectly storing x and z, but y is in a weird line across the middle
-
 void horizontalFFT() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
 

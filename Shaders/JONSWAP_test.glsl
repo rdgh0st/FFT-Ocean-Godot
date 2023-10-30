@@ -23,6 +23,7 @@ layout(set = 0, binding = 0) buffer SpectrumParameters {
     float stage; // i in iteration above
     float direction; // vertical or horizontal
     float swell;
+    float waveAngle;
 } params;
 
 float square(float x) {
@@ -66,7 +67,7 @@ float Hasselmann(float freq) {
 float DirectionSpectrum(float freq, float theta) {
     float peak = 22.0f * pow(((params.windSpeed * params.fetch) / (g * g)), -(1.0f / 3.0f));
     float xi = Hasselmann(freq) + 16 * tanh(peak / freq) * params.swell * params.swell;
-    return NormalizationFactor(xi) * pow(cos(theta / 2.0), 2.0 * xi);
+    return NormalizationFactor(xi) * pow(cos((theta - params.waveAngle) / 2.0), 2.0 * xi);
 }
 
 float TMACorrection(float omega)

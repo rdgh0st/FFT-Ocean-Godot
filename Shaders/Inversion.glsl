@@ -37,7 +37,10 @@ layout(set = 0, binding = 16, r32f) uniform image2D foam_image;
 
 void main() {
     ivec2 x = ivec2(gl_GlobalInvocationID.xy);
-    float perm = 1.0 - 2.0 * ((x.x + x.y) % 2);
+    //float perm = 1.0 - 2.0 * ((x.x + x.y) % 2);
+    float perms[] = {1.0, -1.0};
+    int index = int(mod((int(x.x + x.y)) , 2));
+    float perm = perms[index];
     vec4 h = imageLoad(heightmap_image, x) * perm;
     vec4 t = imageLoad(triangle_image, x) * perm;
     vec2 dxdz = h.xy;
@@ -64,10 +67,11 @@ void main() {
     if (x.y > params.resolution / 2.0) {
         foam *= exp(foamParams.lowerAdjustment);
     }
+    
 
     imageStore(foam_image, x, vec4(foam, 0, 0, 1));
 
-    imageStore(displacement_image, x, vec4(displacement, foam));
+    imageStore(displacement_image, x, vec4(displacement, 1));
 
     imageStore(slope_image, x, vec4(slopes, dxxdzz));
 

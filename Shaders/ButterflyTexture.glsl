@@ -36,14 +36,15 @@ vec2 ComplexExp(vec2 a) {
 
 void main() {
     vec2 pixel_coord = gl_GlobalInvocationID.xy;
-    float k = mod(((pixel_coord.y * params.resolution) / pow(2.0, pixel_coord.x + 1)), params.resolution);
-    vec2 mult = vec2(2.0 * PI * k / params.resolution);
-    vec2 twiddle = vec2(cos(2.0 * PI * k / params.resolution), sin(2.0 * PI * k / params.resolution));
+    float k = mod(pixel_coord.y * (params.resolution / pow(2.0, pixel_coord.x + 1)), params.resolution);
+    vec2 twiddle = vec2(sin(2.0 * PI * k / params.resolution), cos(2.0 * PI * k / params.resolution));
     float span = pow(2.0, pixel_coord.x);
     bool top = false;
-    if (mod(pixel_coord.y, pow(2.0, pixel_coord.x + 1)) < span) {
+    if (mod(pixel_coord.y, pow(2, pixel_coord.x + 1)) < pow (2, pixel_coord.x)) {
         top = true;
     }
+
+    
 
     if (pixel_coord.x == 0) {
         if (top) {
@@ -58,5 +59,15 @@ void main() {
             imageStore(butterflyTex, ivec2(pixel_coord), vec4(twiddle.x, twiddle.y, pixel_coord.y - span, pixel_coord.y));
         }
     }
-    
+    /*
+    int Size = int(params.resolution);
+    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
+	uint b = Size >> (id.x + 1);
+	vec2 mult = 2 * PI * vec2(0, 1) / Size;
+    int index = id.y;
+    uint w = b * (index / b);
+    uint i = (w + index) % Size;
+	vec2 twiddle = vec2(cos((-2.0 * PI) / Size * w), sin((-2.0 * PI) / Size * w));
+	imageStore(butterflyTex, id, vec4(twiddle.x, twiddle.y, i, i + b));
+    */
 }

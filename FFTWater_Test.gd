@@ -17,6 +17,7 @@ var currentFrame: float;
 @export var highCutoff: float;
 @export var depth: float;
 @export var swell: float;
+@export var waveAngle: float;
 
 @export_group("Foam Parameters")
 @export var lambda: float;
@@ -67,8 +68,9 @@ var prevFoamParams;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	waveAngle = deg_to_rad(waveAngle);
 	initTime = Time.get_unix_time_from_system();
-	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	prevFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	init_gpu();
 
@@ -104,7 +106,7 @@ func _notification(what):
 		cleanup_gpu();
 
 func generate_init_spectrum():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	
 	var params: PackedByteArray = input.to_byte_array();
@@ -251,13 +253,13 @@ func generate_init_spectrum():
 	
 	rd.free_rid(butterfly_uniform_set);
 	
-	var disp_output_bytes = rd.texture_get_data(image_rid, 0);
-	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGF, disp_output_bytes);
+	var disp_output_bytes = rd.texture_get_data(butterfly_rid, 0);
+	var normal_image = Image.create_from_data((log(resolution) / log(2)), resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
 	var tex = ImageTexture.create_from_image(normal_image);
-	#$TextureRect.texture = tex;
+	$TextureRect.texture = tex;
 
 func generate_disp():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	
 	var params: PackedByteArray = input.to_byte_array();
 	rd.buffer_update(params_buffer, 0, params.size(), params);
@@ -291,7 +293,7 @@ func FFT():
 	var stage = 0;
 	
 	while stage < (log(resolution) / log(2)):
-		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell];
+		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell, waveAngle];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
@@ -323,7 +325,7 @@ func FFT():
 	
 	# need to go from 0 to logSize - 1 inc
 	while stage < (log(resolution) / log(2)):
-		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell];
+		var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, stage, direction, swell, waveAngle];
 		var params: PackedByteArray = input.to_byte_array();
 		rd.buffer_update(params_buffer, 0, params.size(), params);
 		
@@ -349,7 +351,7 @@ func FFT():
 		ping = !ping;
 		stage += 1;
 	
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0];
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	var params: PackedByteArray = input.to_byte_array();
 	rd.buffer_update(params_buffer, 0, params.size(), params);
 		
@@ -378,7 +380,7 @@ func FFT():
 	var foam_output_bytes = rd.texture_get_data(foam_rid, 0);
 	var foam_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, foam_output_bytes);
 	var tex3 := ImageTexture.create_from_image(foam_image);
-	#$TextureRect.texture = tex3;
+	$TextureRect.texture = tex3;
 	
 	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
 	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
@@ -426,7 +428,8 @@ func cleanup_gpu():
 	rd = null;
 
 func _process(_delta):
-	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell];
+	waveAngle = deg_to_rad(waveAngle);
+	var currentParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	var currrentFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	if (currentParams != prevParams || currrentFoamParams != prevFoamParams):
 		prevFoamParams = currrentFoamParams;
