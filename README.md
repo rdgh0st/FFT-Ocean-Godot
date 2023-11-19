@@ -42,15 +42,15 @@ https://www.youtube.com/watch?v=ClW3fo94KR4&t=0s&ab_channel=Codemotion
 
 Professional Papers:
 
-Realtime GPGPU FFT Ocean Water Simulation
+[Realtime GPGPU FFT Ocean Water Simulation](https://tore.tuhh.de/bitstream/11420/1439/1/GPGPU_FFT_Ocean_Simulation.pdf)
 
 https://people.computing.clemson.edu/~jtessen/reports/papers_files/coursenotes2004.pdf
 
-Ocean Surface Generation and Rendering
+[Ocean Surface Generation and Rendering](https://www.cg.tuwien.ac.at/research/publications/2018/GAMPER-2018-OSG/GAMPER-2018-OSG-thesis.pdf)
 
 Examples in Games:
 
-The Technical Art of SoT: https://www.youtube.com/watch?v=y9BOz2dFZzs
+[The Technical Art of SoT](https://www.youtube.com/watch?v=y9BOz2dFZzs)
 
 https://gpuopen.com/gdc-presentations/2019/gdc-2019-agtd6-interactive-water-simulation-in-atlas.pdf
 
