@@ -6,6 +6,7 @@ extends MeshInstance3D
 @export_file("*.glsl") var inversion_shader;
 @export var frameSkip: float;
 var currentFrame: float;
+@export_group("Spectrum Parameters")
 @export var fetch : float;
 @export var windSpeed : float;
 @export var enhancementFactor: float;
@@ -425,11 +426,3 @@ func _process(_delta):
 		currentFrame = 0;
 		RenderingServer.call_on_render_thread(generate_disp);
 		RenderingServer.call_on_render_thread(FFT);
-	#if Input.is_action_pressed("turn_left"):
-		#rotate_y(rotationSpeed);
-	#if Input.is_action_pressed("turn_right"):
-		#rotate_y(-rotationSpeed);
-	#if Input.is_action_pressed("move_forward"):
-		#direction += -global_transform.basis.z;
-	#if Input.is_action_pressed("move_backward"):
-		#direction += global_transform.basis.z;

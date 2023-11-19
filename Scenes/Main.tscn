@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://dnrjicrfu1l3o"]
+
+[ext_resource type="PackedScene" uid="uid://kaefq8k8h6wl" path="res://Scenes/test_FFT.tscn" id="1_etlth"]
+[ext_resource type="Script" path="res://Scenes/CameraMovement.gd" id="2_jpco5"]
+
+[node name="Main" type="Node3D"]
+
+[node name="MeshInstance3D" parent="." instance=ExtResource("1_etlth")]
+depth = 50.0
+swell = 0.5
+
+[node name="Camera3D" type="Camera3D" parent="."]
+script = ExtResource("2_jpco5")
+moveSpeed = 10.0
+rotationSpeed = 1.0
