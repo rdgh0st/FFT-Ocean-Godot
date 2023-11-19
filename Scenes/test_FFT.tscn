@@ -2,7 +2,7 @@
 
 [ext_resource type="Shader" path="res://Shaders/FFTWater.gdshader" id="1_6gfy4"]
 [ext_resource type="Texture2D" uid="uid://bcwfg5mk3hs83" path="res://addons/AllSkyFree/Skyboxes/AllSkyFree_Sky_EpicBlueSunset_Equirect.png" id="2_ku6l3"]
-[ext_resource type="Script" path="res://FFTWater_Test.gd" id="2_l2wr8"]
+[ext_resource type="Script" path="res://Scripts/FFTWater.gd" id="2_l2wr8"]
 [ext_resource type="Texture2D" uid="uid://stdkatlahlcu" path="res://addons/AllSkyFree/Skyboxes/AllSkyFree_Sky_ColdNight_Equirect.png" id="4_7efmu"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_c8ucf"]
@@ -72,19 +72,20 @@ brute_force = "res://Shaders/FFT.glsl"
 butterfly_texture_shader = "res://Shaders/ButterflyTexture.glsl"
 inversion_shader = "res://Shaders/Inversion.glsl"
 fetch = 100000.0
-windSpeed = 30.0
+windSpeed = 50.0
 enhancementFactor = 3.3
 resolution = 1024.0
 oceanSize = 1024.0
 lowCutoff = -500.0
 highCutoff = 500.0
 depth = 500.0
-swell = 0.5
-waveAngle = 140.0
+swell = 0.3
+waveAngle = 90.0
 lambda = 1.0
-foamDecay = -1.0
+foamDecay = -100.0
+foamBias = 10.0
 foamThreshold = 5.0
-foamAdd = 0.006
+foamAdd = 0.005
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_s6y0h")

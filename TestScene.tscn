@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://vsg167j0557c"]
+[gd_scene load_steps=4 format=3 uid="uid://bm0flyrdooaji"]
 
 [sub_resource type="GDScript" id="1"]
 script/source = "extends VSplitContainer
