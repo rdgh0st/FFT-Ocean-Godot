@@ -58,7 +58,6 @@ op_type = 3
 noise_type = 2
 fractal_type = 0
 cellular_distance_function = 1
-cellular_jitter = 1.0
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_p31ai"]
 seamless = true
@@ -82,7 +81,6 @@ noise_type = 2
 seed = 3
 fractal_type = 0
 cellular_distance_function = 1
-cellular_jitter = 1.0
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_137xj"]
 seamless = true
@@ -350,3 +348,4 @@ nodes/fragment/24/position = Vector2(-1980, 80)
 nodes/fragment/25/node = SubResource("VisualShaderNodeMix_oi2q4")
 nodes/fragment/25/position = Vector2(260, 440)
 nodes/fragment/connections = PackedInt32Array(5, 0, 3, 0, 6, 0, 5, 2, 8, 0, 7, 0, 9, 0, 8, 2, 3, 0, 10, 0, 7, 0, 10, 1, 10, 0, 11, 0, 2, 0, 4, 0, 11, 0, 4, 1, 12, 0, 0, 1, 13, 0, 0, 3, 11, 0, 0, 5, 14, 0, 15, 0, 16, 0, 19, 0, 15, 0, 20, 0, 19, 0, 20, 1, 15, 0, 21, 0, 21, 0, 22, 0, 20, 0, 22, 1, 23, 0, 16, 0, 17, 0, 24, 0, 15, 0, 24, 2, 24, 0, 23, 0, 22, 0, 25, 2, 4, 0, 25, 0, 25, 0, 0, 0)
+metadata/_edit_res_path = "res://Shaders/water.tres"

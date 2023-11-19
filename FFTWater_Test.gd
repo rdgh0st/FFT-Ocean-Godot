@@ -66,15 +66,21 @@ var deltaTime: float;
 var prevParams;
 var prevFoamParams;
 
+var tex: Texture2DRD;
+var tex2: Texture2DRD;
+var tex3: Texture2DRD;
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initTime = Time.get_unix_time_from_system();
 	prevParams = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
 	prevFoamParams = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
-	init_gpu();
+	RenderingServer.call_on_render_thread(init_gpu);
 
 func init_gpu():
-	rd = RenderingServer.create_local_rendering_device();
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, deg_to_rad(waveAngle)];
+	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
+	rd = RenderingServer.get_rendering_device();
 	
 	var shader_file_data: RDShaderFile = load(compute_shader);
 	var shader_spirv: RDShaderSPIRV = shader_file_data.get_spirv();
@@ -97,17 +103,6 @@ func init_gpu():
 	normal_shader_rid = rd.shader_create_from_spirv(normal_shader_spirv);
 	normal_pipeline = rd.compute_pipeline_create(normal_shader_rid);
 	
-	generate_init_spectrum();
-	#generate_disp();
-
-func _notification(what):
-	if what == NOTIFICATION_PREDELETE:
-		cleanup_gpu();
-
-func generate_init_spectrum():
-	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, deg_to_rad(waveAngle)];
-	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
-	
 	var params: PackedByteArray = input.to_byte_array();
 	params_buffer = rd.storage_buffer_create(params.size(), params);
 	params_uniform = RDUniform.new();
@@ -128,7 +123,7 @@ func generate_init_spectrum():
 	imageFormat.width = resolution;
 	imageFormat.height = resolution;
 	imageFormat.format = RenderingDevice.DATA_FORMAT_R32G32_SFLOAT;
-	imageFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	imageFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	var image_rid = rd.texture_create(imageFormat, RDTextureView.new(), [image.get_data()]);
 	imageUniform = RDUniform.new();
@@ -142,7 +137,7 @@ func generate_init_spectrum():
 	butterflyFormat.width = (log(resolution) / log(2));
 	butterflyFormat.height = resolution;
 	butterflyFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	butterflyFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	butterflyFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	var butterfly_rid = rd.texture_create(butterflyFormat, RDTextureView.new(), [ButterflyImage.get_data()]);
 	butterflyUniform = RDUniform.new();
@@ -156,7 +151,7 @@ func generate_init_spectrum():
 	displacementFormat.width = resolution;
 	displacementFormat.height = resolution;
 	displacementFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	displacementFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	displacementFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	displacement_rid = rd.texture_create(displacementFormat, RDTextureView.new(), [DisplacementImage.get_data()]);
 	displacementUniform = RDUniform.new();
@@ -170,7 +165,7 @@ func generate_init_spectrum():
 	slopeFormat.width = resolution;
 	slopeFormat.height = resolution;
 	slopeFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	slopeFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	slope_rid = rd.texture_create(slopeFormat, RDTextureView.new(), [SlopeImage.get_data()]);
 	
@@ -185,7 +180,7 @@ func generate_init_spectrum():
 	heightFormat.width = resolution;
 	heightFormat.height = resolution;
 	heightFormat.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	heightFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	heightFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 		
 	height_rid = rd.texture_create(heightFormat, RDTextureView.new(), [HeightMap.get_data()]);
 	heightUniform = RDUniform.new();
@@ -199,7 +194,7 @@ func generate_init_spectrum():
 	slopeFormat2.width = resolution;
 	slopeFormat2.height = resolution;
 	slopeFormat2.format = RenderingDevice.DATA_FORMAT_R32G32B32A32_SFLOAT;
-	slopeFormat2.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	slopeFormat2.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	var triangle_rid = rd.texture_create(slopeFormat2, RDTextureView.new(), [SlopeImage2.get_data()]);
 	
@@ -214,7 +209,7 @@ func generate_init_spectrum():
 	foamFormat.height = resolution;
 	foamFormat.width = resolution;
 	foamFormat.format = RenderingDevice.DATA_FORMAT_R32_SFLOAT;
-	foamFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
+	foamFormat.usage_bits = RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_UPDATE_BIT | RenderingDevice.TEXTURE_USAGE_STORAGE_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_FROM_BIT;
 	
 	foam_rid = rd.texture_create(foamFormat, RDTextureView.new(), [foamImage.get_data()]);
 	foamUniform = RDUniform.new();
@@ -222,19 +217,43 @@ func generate_init_spectrum():
 	foamUniform.binding = 16;
 	foamUniform.add_id(foam_rid);
 	
+	tex = Texture2DRD.new();
+	tex2 = Texture2DRD.new();
+	tex3 = Texture2DRD.new();
+	tex.texture_rd_rid = displacement_rid;
+	tex2.texture_rd_rid = slope_rid;
+	tex3.texture_rd_rid = foam_rid;
+	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
+	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
+	get_surface_override_material(0).set_shader_parameter("foamImage", tex3);
+	
+	RenderingServer.call_on_render_thread(generate_init_spectrum);
+
+func _notification(what):
+	if what == NOTIFICATION_PREDELETE:
+		cleanup_gpu();
+
+func generate_init_spectrum():
+	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
+	
+	var params: PackedByteArray = input.to_byte_array();
+	rd.buffer_update(params_buffer, 0, params.size(), params);
+	
+	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
+	
+	var foamParams: PackedByteArray = foamInput.to_byte_array();
+	rd.buffer_update(foam_params_buffer, 0, foamParams.size(), foamParams);
+	
 	uniform_set = rd.uniform_set_create([params_uniform, imageUniform], shader_rid, 0);
 	
 	pipeline = rd.compute_pipeline_create(shader_rid);
-	
-	
 	
 	var compute_list := rd.compute_list_begin();
 	rd.compute_list_bind_compute_pipeline(compute_list, pipeline);
 	rd.compute_list_bind_uniform_set(compute_list, uniform_set, 0);
 	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
+	rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 	
 	rd.free_rid(uniform_set);
 	
@@ -247,15 +266,9 @@ func generate_init_spectrum():
 	rd.compute_list_bind_uniform_set(compute_list, butterfly_uniform_set, 0);
 	rd.compute_list_dispatch(compute_list, (log(resolution) / log(2)), resolution / 8, 1);
 	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
+	rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 	
 	rd.free_rid(butterfly_uniform_set);
-	
-	var disp_output_bytes = rd.texture_get_data(butterfly_rid, 0);
-	var normal_image = Image.create_from_data((log(resolution) / log(2)), resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
-	var tex = ImageTexture.create_from_image(normal_image);
-	#$TextureRect.texture = tex;
 
 func generate_disp():
 	var input: PackedFloat32Array = [fetch, windSpeed, enhancementFactor, inputfreq, resolution, oceanSize, Time.get_unix_time_from_system() - initTime, transformHorizontal, lowCutoff, highCutoff, depth, 0, 0, swell, waveAngle];
@@ -272,11 +285,9 @@ func generate_disp():
 	rd.compute_list_bind_uniform_set(compute_list, disp_uniform_set, 0);
 	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
+	rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 	
 	rd.free_rid(disp_uniform_set);
-	#$TextureRect.texture = tex;
 	
 func FFT():
 	var ping = true; # ping means default values
@@ -299,9 +310,7 @@ func FFT():
 		rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
 		rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 		rd.compute_list_end();
-		rd.submit();
-		#await get_tree().create_timer(3).timeout
-		rd.sync();
+		rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 		
 		rd.free_rid(normal_uniform_set);
 		
@@ -331,8 +340,7 @@ func FFT():
 		rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
 		rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 		rd.compute_list_end();
-		rd.submit();
-		rd.sync();
+		rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 		
 		rd.free_rid(normal_uniform_set);
 		
@@ -358,28 +366,9 @@ func FFT():
 	rd.compute_list_bind_uniform_set(compute_list, normal_uniform_set, 0);
 	rd.compute_list_dispatch(compute_list, resolution / 8, resolution / 8, 1);
 	rd.compute_list_end();
-	rd.submit();
-	rd.sync();
 	
+	rd.barrier(RenderingDevice.BARRIER_MASK_COMPUTE);
 	
-	var disp_output_bytes = rd.texture_get_data(displacement_rid, 0);
-	var normal_image = Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, disp_output_bytes);
-	var tex = ImageTexture.create_from_image(normal_image);
-	#$TextureRect.texture = tex;
-	
-	var slope_output_bytes = rd.texture_get_data(slope_rid, 0);
-	var slope_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RGBAF, slope_output_bytes);
-	var tex2 := ImageTexture.create_from_image(slope_image);
-	#$TextureRect2.texture = tex2;
-	
-	var foam_output_bytes = rd.texture_get_data(foam_rid, 0);
-	var foam_image := Image.create_from_data(resolution, resolution, false, Image.FORMAT_RF, foam_output_bytes);
-	var tex3 := ImageTexture.create_from_image(foam_image);
-	#$TextureRect.texture = tex3;
-	
-	get_surface_override_material(0).set_shader_parameter("outputImage", tex);
-	get_surface_override_material(0).set_shader_parameter("normalImage", tex2);
-	get_surface_override_material(0).set_shader_parameter("foamImage", tex3);
 	
 
 func cleanup_gpu():
@@ -428,13 +417,13 @@ func _process(_delta):
 	if (currentParams != prevParams || currrentFoamParams != prevFoamParams):
 		prevFoamParams = currrentFoamParams;
 		prevParams = currentParams;
-		generate_init_spectrum();
+		RenderingServer.call_on_render_thread(generate_init_spectrum);
 	
 	if (Input.is_action_just_pressed("move_backward")):
-		generate_disp();
+		RenderingServer.call_on_render_thread(generate_disp);
 	if (currentFrame < frameSkip):
 		currentFrame = currentFrame + 1;
 	else:
 		currentFrame = 0;
-		generate_disp();
-		FFT();
+		RenderingServer.call_on_render_thread(generate_disp);
+		RenderingServer.call_on_render_thread(FFT);

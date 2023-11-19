@@ -72,18 +72,19 @@ brute_force = "res://Shaders/FFT.glsl"
 butterfly_texture_shader = "res://Shaders/ButterflyTexture.glsl"
 inversion_shader = "res://Shaders/Inversion.glsl"
 fetch = 100000.0
-windSpeed = 50.0
+windSpeed = 30.0
 enhancementFactor = 3.3
 resolution = 1024.0
 oceanSize = 1024.0
 lowCutoff = -500.0
 highCutoff = 500.0
 depth = 500.0
-swell = 0.8
-waveAngle = 180.0
+swell = 0.5
+waveAngle = 140.0
 lambda = 1.0
-foamDecay = -2.0
-foamThreshold = 1.0
+foamDecay = -1.0
+foamThreshold = 5.0
+foamAdd = 0.006
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_s6y0h")
