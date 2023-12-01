@@ -29,7 +29,7 @@ shader_parameter/oceanSize = 1024.0
 shader_parameter/resolution = 1024.0
 shader_parameter/lambda = 0.1
 shader_parameter/lambdaClamp = 100.0
-shader_parameter/foam_mix_strength = 10.0
+shader_parameter/foam_mix_strength = 25.0
 shader_parameter/AmbientColor = Color(0.141176, 0.541176, 0.882353, 1)
 shader_parameter/AmbientIntensity = 0.1
 shader_parameter/DiffuseColor = Color(0.533333, 0.803922, 1, 1)
@@ -62,7 +62,7 @@ reflected_light_source = 2
 tonemap_mode = 2
 glow_enabled = true
 
-[node name="MeshInstance3D" type="MeshInstance3D"]
+[node name="WavesAndLight" type="MeshInstance3D"]
 mesh = SubResource("PlaneMesh_c8ucf")
 surface_material_override/0 = SubResource("ShaderMaterial_5e6qt")
 script = ExtResource("2_l2wr8")
@@ -94,6 +94,7 @@ environment = SubResource("Environment_s6y0h")
 transform = Transform3D(0.999998, 0.000377758, -0.00170396, 0, 0.976296, 0.21644, 0.00174533, -0.216439, 0.976295, -68.0859, 757.91, 2858.85)
 light_energy = 0.083
 light_indirect_energy = 0.0
+light_angular_distance = 90.0
 shadow_enabled = true
 shadow_bias = 1.0
 sky_mode = 1

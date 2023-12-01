@@ -5,11 +5,12 @@
 
 [node name="Main" type="Node3D"]
 
-[node name="MeshInstance3D" parent="." instance=ExtResource("1_etlth")]
+[node name="WavesAndLight" parent="." instance=ExtResource("1_etlth")]
 depth = 50.0
 swell = 0.5
 
 [node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-1, -2.33627e-08, 8.42432e-08, 0, 0.96363, 0.267238, -8.74228e-08, 0.267238, -0.96363, 0, 50, 0)
 script = ExtResource("2_jpco5")
 moveSpeed = 10.0
 rotationSpeed = 1.0

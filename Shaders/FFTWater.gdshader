@@ -5,6 +5,7 @@ uniform sampler2D outputImage;
 uniform sampler2D normalImage;
 uniform sampler2D foamImage;
 varying vec3 world_pos;
+varying vec3 world_normal;
 varying float jacobian;
 varying float foam_specular_factor;
 varying float foam_mix_factor;
@@ -72,6 +73,7 @@ void vertex() {
 	VERTEX += texture(outputImage, world_pos.xz).xyz;
 	VERTEX.y = min(VERTEX.y * height_scale, 5000);
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
+	
 }
 
 vec3 HDR(vec3 color) {
@@ -82,52 +84,21 @@ void fragment() {
 	vec2 slope = texture(normalImage, world_pos.xz).xy;
 	NORMAL = normalize(vec3(-slope.y, 1, -slope.x));
 	
+	
+	mat4 worldToObj = inverse(MODEL_MATRIX);
+
+	world_normal = normalize(NORMAL * mat3(worldToObj));
+	NORMAL = world_normal;
+	
 	vec3 N = normalize(NORMAL.xyz);
 	vec3 V = normalize(CAMERA_POSITION_WORLD - world_pos.xyz);
 	vec3 L = normalize(lightPos);
 	vec3 H = normalize(L + V);
     float VdotH = dot(V, H);
-    float NdotH = dot(N, H);
+    float NdotH = dot(world_normal, H);
     float LdotH = dot(L, H);
-    float NdotL = dot(N, L);
-    float NdotV = dot(N, V);
-
-	vec4 ambient = AmbientColor * AmbientIntensity;
-	vec4 diffuse = DiffuseIntensity * DiffuseColor * min(max(0, NdotL), 1);
-
-    if (NdotH <= 0.0 || NdotL <= 0.0) {
-        ALBEDO = (ambient + diffuse).rgb;
-    }
-	
-    // float3 specular intensity is the cook torrance formula, multiply it with specular color
-    float denom = 4.0 * NdotL * NdotV;
-
-    // GGXDistribution
-    float alphaSquare = pow(Roughness, 2);
-    float pi = 3.14159265358979323846;
-    float denomGGX = pi * pow((pow(NdotH, 2) * (alphaSquare - 1.0)) + 1.0, 2);
-    float GGXDistribution = alphaSquare / denomGGX;
-
-    // FresnelSchlick
-    float M = pow(min(0, max(1, 1.0 - VdotH)), 5);
-    float FresnelSchlick = F0 + (1.0 - F0) * M;
-
-    // Geometry
-    float K = pow((Roughness + 1.0), 2) / 8.0;
-    float denomG1L = (NdotL * (1.0 - K)) + K;
-    float G1L = NdotL / denomG1L;
-
-    float denomG1V = (NdotV * (1.0 - K)) + K;
-    float G1V = NdotV / denomG1V;
-
-    float Geometry = G1L * G1V;
-
-    // Apply Cook-Torrance Formula and find final Specular value
-    float numer = GGXDistribution * FresnelSchlick * Geometry;
-    float cookTorranceValue = numer / denom;
-    vec4 finalSpecular = cookTorranceValue * SpecularColor * SpecularIntensity * NdotL;
-
-	vec4 foam = foamColor * texture(foamImage, world_pos.xz).r;
+    float NdotL = dot(world_normal, L);
+    float NdotV = dot(world_normal, V);
 
     // integrate all color values into final return color
 	
@@ -150,7 +121,7 @@ void fragment() {
 void light() {
 	vec3 H = normalize(LIGHT + VIEW);
 	float spec = clamp(pow(dot(NORMAL, H), SpecularPower), 0.0, 1.0) * SpecularIntensity;
-	SPECULAR_LIGHT += (LIGHT_COLOR * ALBEDO * ATTENUATION / PI) * clamp(dot(NORMAL, H), 0.0, 1.0) * foam_specular_factor;
+	SPECULAR_LIGHT += (LIGHT_COLOR * ALBEDO * ATTENUATION / PI) * clamp(dot(world_normal, H), 0.0, 1.0) * foam_specular_factor;
 	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * spec * foam_specular_factor;
 	
 	// Foam Lighting
