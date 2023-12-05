@@ -25,6 +25,7 @@ uniform vec4 LightColor : source_color;
 uniform vec4 SpecularColor : source_color;
 uniform vec4 foamColor : source_color;
 uniform vec4 sssColor : source_color;
+uniform float sssStrength;
 uniform float SpecularIntensity;
 uniform float SpecularPower;
 uniform vec3 lightPos;
@@ -90,6 +91,9 @@ void fragment() {
 	//METALLIC = DiffuseIntensity * foam_specular_factor;
 	METALLIC = 0.0;
 	SPECULAR = SpecularIntensity * foam_specular_factor;
+	SSS_STRENGTH = sssStrength;
+	SSS_TRANSMITTANCE_COLOR = sssColor;
+	SSS_TRANSMITTANCE_DEPTH = 5000.0;
 }
 
 void light() {
