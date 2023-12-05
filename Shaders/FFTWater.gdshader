@@ -50,26 +50,6 @@ vec2 uv_sphere(vec3 v)
 void vertex() {
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
 	
-	/*
-	float height = texture(outputImage, world_pos.xz).x;
-	float dispX = min(texture(outputImage, world_pos.xz).z * lambda, lambdaClamp);
-	float dispZ = min(texture(outputImage, world_pos.xz).a * lambda, lambdaClamp);
-	VERTEX += vec3(dispX, height * height_scale, dispZ);
-	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
-	
-	float texel = 1.0 / resolution;
-	float texelSize = oceanSize / resolution;
-	
-	vec4 derivatives = texture(normalImage, world_pos.xz);
-	
-	jacobian = (1.0 + lambda * derivatives.b) * (1.0 + lambda * derivatives.a) - lambda * lambda * texture(outputImage, world_pos.xz).y * texture(outputImage, world_pos.xz).y;
-	jacobian = jacobian + jacobianBias;
-	
-	vec2 slope = vec2(derivatives.x / (1.0 + derivatives.z), (derivatives.y / (1.0 + derivatives.w)) * lambda);
-	
-	NORMAL = normalize(vec3(-slope.x, 1, -slope.y));
-	*/
-	
 	VERTEX += texture(outputImage, world_pos.xz).xyz;
 	VERTEX.y = min(VERTEX.y * height_scale, 5000);
 	world_pos = (INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xyz / resolution;
@@ -101,30 +81,26 @@ void fragment() {
     float NdotV = dot(world_normal, V);
 
     // integrate all color values into final return color
-	
-	foam_mix_factor = clamp((texture(foamImage, world_pos.xz).r), 0.0, 1.0);
-	foam_mix_factor = (foam_mix_factor * foam_mix_factor) * foam_mix_strength;
+	jacobian = clamp((texture(foamImage, world_pos.xz).r), 0.0, 1.0);
+	foam_mix_factor = (jacobian * jacobian) * foam_mix_strength;
 	ALBEDO = mix(AmbientColor, foamColor, foam_mix_factor).rgb;
 	foam_specular_factor = (1.0 - foam_mix_factor);
 	
 	ROUGHNESS = foam_mix_factor * 0.02;
-	METALLIC = DiffuseIntensity * foam_specular_factor;
+	//METALLIC = DiffuseIntensity * foam_specular_factor;
+	METALLIC = 0.0;
 	SPECULAR = SpecularIntensity * foam_specular_factor;
-	
-    //vec4 color = ambient + foam;
-    //ALBEDO = color.rgb;
-	
-	
-	
 }
 
 void light() {
 	vec3 H = normalize(LIGHT + VIEW);
+	float VdotH = pow(clamp(dot(normalize(VIEW), -H), 0.0, 1.0), 5.0) * 30.0 * 0.2;
 	float spec = clamp(pow(dot(NORMAL, H), SpecularPower), 0.0, 1.0) * SpecularIntensity;
-	SPECULAR_LIGHT += (LIGHT_COLOR * ALBEDO * ATTENUATION / PI) * clamp(dot(world_normal, H), 0.0, 1.0) * foam_specular_factor;
+	SPECULAR_LIGHT += SpecularIntensity * (LIGHT_COLOR * ALBEDO * ATTENUATION / PI) * clamp(dot(world_normal, H), 0.0, 1.0) * foam_specular_factor;
 	SPECULAR_LIGHT += LIGHT_COLOR * ATTENUATION * spec * foam_specular_factor;
 	
-	// Foam Lighting
-	DIFFUSE_LIGHT += DiffuseIntensity * foam_mix_factor * foamColor.rgb * ATTENUATION;
+	float fresnel = pow(clamp(1.0 - dot(world_normal, VIEW), 0.0, 1.0), 5.0);
 	
+	//DIFFUSE_LIGHT += DiffuseIntensity * foam_mix_factor * foamColor.rgb * ATTENUATION;
+	DIFFUSE_LIGHT += mix(DiffuseColor * (1.0 - fresnel), vec4(0.0), jacobian).xyz * ATTENUATION;
 }
