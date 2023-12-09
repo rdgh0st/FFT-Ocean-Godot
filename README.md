@@ -1,6 +1,10 @@
 # Godot 4 FFT Ocean
 
-Description Here
+This is essentially a combination of [Acerola](https://github.com/GarrettGunnell/Water), [Jump Trajectory](https://github.com/gasgiant/FFT-Ocean), and [tessarakkt](https://github.com/tessarakkt/godot4-oceanfft/tree/devel)'s implementations of Ocean waves using Fast Fourier Transforms on oceanographic spectra. My implementation uses a JONSWAP spectrum that allows for bias towards ocean swell, which is then converted to the time domain and uses FFTs with precomputed indices and twiddle values to generate a displacement and normal map for vertex and lighting adjustment. Foam accumulation is handled using jacobian values which are calculated after each FFT. 
+
+This was developed in Godot 4.2, which uses their compute shader pipeline leveraging custom GLSL shaders. Texture2DRDs are utilized via Godot 4.2 and allow faster access to textures from both custom compute shaders for modification and the native gdhsader language for vertex and fragment portions. This implementation performs with a steady 60 FPS when simulating a 1024x1024 map (~1 million waves), and 30 FPS when simulating a 2048x2048 map (~4.2 million waves). 
+
+Below are all of the resources I consulted during the development process-- the most used were the three repositories linked above as well as "Realtime GPGPU FFT Ocean Water Simulation" by Fynn-Jorin Flügge and "Simulating Ocean Water" by Jerry Tessendorf.
 
 ### References:
 
