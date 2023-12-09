@@ -38,8 +38,6 @@ https://web.archive.org/web/20230309153757/https://www.keithlantz.net/2011/11/oc
 
 https://www.gamedev.net/forums/topic/666713-explaining-to-an-idiot-me-about-mathematics-concerning-ocean-waves/
 
-https://github.com/GarrettGunnell/Water
-
 https://www.slideshare.net/Codemotion/an-introduction-to-realistic-ocean-rendering-through-fft-fabio-suriano-codemotion-rome-2017
 
 https://www.youtube.com/watch?v=ClW3fo94KR4&t=0s&ab_channel=Codemotion
