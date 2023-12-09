@@ -107,7 +107,6 @@ void main() {
 	    float ch = cosh(kLength * params.depth);
 	    float dOmegak = g * (params.depth * kLength / ch / ch + th) / omega / 2.0;
         float jonswap = JONSWAP(omega) * DirectionSpectrum(omega, kAngle);
-        // multiply with DirectionSpectrum and ShortWavesFade
 
         vec2 gauss = UniformToGaussian(nrand(normalize(k)), nrand(normalize(pixel_coord) + 0.0001));
         vec2 res = gauss * sqrt(2.0 * jonswap * abs(dOmegak) / kLength * deltaK * deltaK);

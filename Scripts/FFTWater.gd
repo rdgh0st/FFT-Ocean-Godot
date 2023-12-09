@@ -1,5 +1,5 @@
 extends MeshInstance3D
-@export_file("*.glsl") var compute_shader
+@export_file("*.glsl") var jonswap_shader;
 @export_file("*.glsl") var displacement_shader;
 @export_file("*.glsl") var brute_force;
 @export_file("*.glsl") var butterfly_texture_shader;
@@ -83,7 +83,7 @@ func init_gpu():
 	var foamInput: PackedFloat32Array = [lambda, foamDecay, foamBias, foamThreshold, foamAdd, lowerAdjustment];
 	rd = RenderingServer.get_rendering_device();
 	
-	var shader_file_data: RDShaderFile = load(compute_shader);
+	var shader_file_data: RDShaderFile = load(jonswap_shader);
 	var shader_spirv: RDShaderSPIRV = shader_file_data.get_spirv();
 	shader_rid = rd.shader_create_from_spirv(shader_spirv);
 	

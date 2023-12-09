@@ -59,15 +59,4 @@ void main() {
             imageStore(butterflyTex, ivec2(pixel_coord), vec4(twiddle.x, twiddle.y, pixel_coord.y - span, pixel_coord.y));
         }
     }
-    /*
-    int Size = int(params.resolution);
-    ivec2 id = ivec2(gl_GlobalInvocationID.xy);
-	uint b = Size >> (id.x + 1);
-	vec2 mult = 2 * PI * vec2(0, 1) / Size;
-    int index = id.y;
-    uint w = b * (index / b);
-    uint i = (w + index) % Size;
-	vec2 twiddle = vec2(cos((-2.0 * PI) / Size * w), sin((-2.0 * PI) / Size * w));
-	imageStore(butterflyTex, id, vec4(twiddle.x, twiddle.y, i, i + b));
-    */
 }
