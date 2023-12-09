@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://dnrjicrfu1l3o"]
 
 [ext_resource type="PackedScene" uid="uid://kaefq8k8h6wl" path="res://Scenes/FFTWaves.tscn" id="1_etlth"]
-[ext_resource type="Script" path="res://Scenes/CameraMovement.gd" id="2_jpco5"]
+[ext_resource type="Script" path="res://Scripts/CameraMovement.gd" id="2_jpco5"]
 
 [node name="Main" type="Node3D"]
 
