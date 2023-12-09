@@ -62,6 +62,9 @@ ambient_light_source = 3
 reflected_light_source = 2
 tonemap_mode = 2
 glow_enabled = true
+fog_density = 0.0
+fog_aerial_perspective = 0.866
+fog_sky_affect = 0.204
 
 [node name="WavesAndLight" type="MeshInstance3D"]
 mesh = SubResource("PlaneMesh_c8ucf")

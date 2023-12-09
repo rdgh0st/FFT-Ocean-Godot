@@ -6,9 +6,9 @@
 [node name="Main" type="Node3D"]
 
 [node name="WavesAndLight" parent="." instance=ExtResource("1_etlth")]
-swell = 0.7
+swell = 0.8
 foamDecay = -10.0
-foamBias = 0.0
+foamBias = 5.0
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(-1, -2.33627e-08, 8.42432e-08, 0, 0.96363, 0.267238, -8.74228e-08, 0.267238, -0.96363, 0, 50, 0)
